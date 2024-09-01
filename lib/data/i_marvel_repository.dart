@@ -1,7 +1,6 @@
 import "package:im_mottu_mobile/index.dart";
 
-abstract class IMarvelService {
-
+abstract class IMarvelRepository {
   String generateHash(String timestamp);
 
   // Characters
@@ -54,6 +53,7 @@ abstract class IMarvelService {
     String? orderBy,
     int? limit,
     int? offset,
+    String? nameStartsWith,
   });
 
   // Events
@@ -99,5 +99,6 @@ abstract class IMarvelService {
     String? orderBy,
     int? limit,
     int? offset,
+    String? titleStartsWith,
   });
 }
