@@ -63,9 +63,10 @@ class SeriesDataContainer {
       limit: json['limit'] as int,
       total: json['total'] as int,
       count: json['count'] as int,
-      results: (json['results'] as List<dynamic>)
-          .map((item) => Series.fromJson(item as Map<String, dynamic>))
-          .toList(),
+      results: (json['results'] as List<dynamic>?)
+              ?.map((item) => Series.fromJson(item as Map<String, dynamic>))
+              .toList() ??
+          [],
     );
   }
 
@@ -83,42 +84,45 @@ class SeriesDataContainer {
 class Series {
   final int id;
   final String title;
-  final String description;
+  final String? description;
   final String resourceURI;
   final List<SeriesUrl> urls;
   final int startYear;
   final int endYear;
   final String rating;
   final DateTime modified;
-  final SeriesThumb thumbnail;
+  final SeriesThumb? thumbnail;
 
   Series({
     required this.id,
     required this.title,
-    required this.description,
+    this.description,
     required this.resourceURI,
     required this.urls,
     required this.startYear,
     required this.endYear,
     required this.rating,
     required this.modified,
-    required this.thumbnail,
+    this.thumbnail,
   });
 
   factory Series.fromJson(Map<String, dynamic> json) {
     return Series(
       id: json['id'] as int,
       title: json['title'] as String,
-      description: json['description'] as String,
-      resourceURI: json['resourceURI'] as String,
-      urls: (json['urls'] as List<dynamic>)
-          .map((item) => SeriesUrl.fromJson(item as Map<String, dynamic>))
-          .toList(),
+      description: json['description'] as String?,
+      resourceURI: json['resourceURI'] as String? ?? '',
+      urls: (json['urls'] as List<dynamic>?)
+              ?.map((item) => SeriesUrl.fromJson(item as Map<String, dynamic>))
+              .toList() ??
+          [],
       startYear: json['startYear'] as int,
       endYear: json['endYear'] as int,
-      rating: json['rating'] as String,
-      modified: DateTime.parse(json['modified'] as String),
-      thumbnail: SeriesThumb.fromJson(json['thumbnail'] as Map<String, dynamic>),
+      rating: json['rating'] as String? ?? '',
+      modified: DateTime.tryParse(json['modified'] as String) ?? DateTime.now(),
+      thumbnail: json['thumbnail'] != null
+          ? SeriesThumb.fromJson(json['thumbnail'] as Map<String, dynamic>)
+          : null,
     );
   }
 
@@ -133,7 +137,7 @@ class Series {
       'endYear': endYear,
       'rating': rating,
       'modified': modified.toIso8601String(),
-      'thumbnail': thumbnail.toJson(),
+      'thumbnail': thumbnail?.toJson(),
     };
   }
 }
@@ -149,8 +153,8 @@ class SeriesUrl {
 
   factory SeriesUrl.fromJson(Map<String, dynamic> json) {
     return SeriesUrl(
-      type: json['type'] as String,
-      url: json['url'] as String,
+      type: json['type'] as String? ?? '',
+      url: json['url'] as String? ?? '',
     );
   }
 
@@ -173,8 +177,8 @@ class SeriesThumb {
 
   factory SeriesThumb.fromJson(Map<String, dynamic> json) {
     return SeriesThumb(
-      path: json['path'] as String,
-      extension: json['extension'] as String,
+      path: json['path'] as String? ?? '',
+      extension: json['extension'] as String? ?? '',
     );
   }
 
