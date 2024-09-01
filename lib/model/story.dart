@@ -63,9 +63,10 @@ class StoryDataContainer {
       limit: json['limit'] as int,
       total: json['total'] as int,
       count: json['count'] as int,
-      results: (json['results'] as List<dynamic>)
-          .map((item) => Story.fromJson(item as Map<String, dynamic>))
-          .toList(),
+      results: (json['results'] as List<dynamic>?)
+              ?.map((item) => Story.fromJson(item as Map<String, dynamic>))
+              .toList() ??
+          [],
     );
   }
 
@@ -83,37 +84,43 @@ class StoryDataContainer {
 class Story {
   final int id;
   final String title;
-  final String description;
+  final String? description;
   final String resourceURI;
   final String type;
   final DateTime modified;
-  final SeriesSummary series;
-  final ComicSummary originalIssue;
-  final StoryThumb thumbnail;
+  final SeriesSummary? series;
+  final ComicSummary? originalIssue;
+  final StoryThumb? thumbnail;
 
   Story({
     required this.id,
     required this.title,
-    required this.description,
+    this.description,
     required this.resourceURI,
     required this.type,
     required this.modified,
-    required this.series,
-    required this.originalIssue,
-    required this.thumbnail,
+    this.series,
+    this.originalIssue,
+    this.thumbnail,
   });
 
   factory Story.fromJson(Map<String, dynamic> json) {
     return Story(
       id: json['id'] as int,
       title: json['title'] as String,
-      description: json['description'] as String,
+      description: json['description'] as String?,
       resourceURI: json['resourceURI'] as String,
       type: json['type'] as String,
-      modified: DateTime.parse(json['modified'] as String),
-      series: SeriesSummary.fromJson(json['series'] as Map<String, dynamic>),
-      originalIssue: ComicSummary.fromJson(json['originalIssue'] as Map<String, dynamic>),
-      thumbnail: StoryThumb.fromJson(json['thumbnail'] as Map<String, dynamic>),
+      modified: DateTime.tryParse(json['modified'] as String) ?? DateTime.now(),
+      series: json['series'] != null
+          ? SeriesSummary.fromJson(json['series'] as Map<String, dynamic>)
+          : null,
+      originalIssue: json['originalIssue'] != null
+          ? ComicSummary.fromJson(json['originalIssue'] as Map<String, dynamic>)
+          : null,
+      thumbnail: json['thumbnail'] != null
+          ? StoryThumb.fromJson(json['thumbnail'] as Map<String, dynamic>)
+          : null,
     );
   }
 
@@ -125,9 +132,9 @@ class Story {
       'resourceURI': resourceURI,
       'type': type,
       'modified': modified.toIso8601String(),
-      'series': series.toJson(),
-      'originalIssue': originalIssue.toJson(),
-      'thumbnail': thumbnail.toJson(),
+      'series': series?.toJson(),
+      'originalIssue': originalIssue?.toJson(),
+      'thumbnail': thumbnail?.toJson(),
     };
   }
 }
@@ -143,8 +150,8 @@ class SeriesSummary {
 
   factory SeriesSummary.fromJson(Map<String, dynamic> json) {
     return SeriesSummary(
-      resourceURI: json['resourceURI'] as String,
-      name: json['name'] as String,
+      resourceURI: json['resourceURI'] as String? ?? '',
+      name: json['name'] as String? ?? '',
     );
   }
 
@@ -167,8 +174,8 @@ class ComicSummary {
 
   factory ComicSummary.fromJson(Map<String, dynamic> json) {
     return ComicSummary(
-      resourceURI: json['resourceURI'] as String,
-      name: json['name'] as String,
+      resourceURI: json['resourceURI'] as String? ?? '',
+      name: json['name'] as String? ?? '',
     );
   }
 
@@ -191,8 +198,8 @@ class StoryThumb {
 
   factory StoryThumb.fromJson(Map<String, dynamic> json) {
     return StoryThumb(
-      path: json['path'] as String,
-      extension: json['extension'] as String,
+      path: json['path'] as String? ?? '',
+      extension: json['extension'] as String? ?? '',
     );
   }
 
