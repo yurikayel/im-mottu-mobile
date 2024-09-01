@@ -22,4 +22,6 @@ abstract class ISeriesRepository {
   Future<SeriesDataWrapper> fetchSeriesByCreator(int creatorId);
 
   Future<SeriesDataWrapper> fetchSeriesByStory(int storyId);
+
+  Future<SeriesDataWrapper> fetchSeriesByCharacter(int characterId);
 }

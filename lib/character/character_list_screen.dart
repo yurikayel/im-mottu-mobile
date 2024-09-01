@@ -26,7 +26,7 @@ class CharacterListScreen extends StatelessWidget {
       ),
       body: NotificationListener<ScrollNotification>(
         onNotification: (scrollInfo) {
-          if (!characterViewModel.isLoading.value &&
+          if (!characterViewModel.isLoadingList.value &&
               scrollInfo.metrics.pixels == scrollInfo.metrics.maxScrollExtent) {
             characterViewModel.fetchCharacters();
             return true;
@@ -50,13 +50,13 @@ class CharacterListScreen extends StatelessWidget {
                   itemCount: characterViewModel.characters.length,
                   itemBuilder: (context, index) {
                     final character = characterViewModel.characters[index];
-                    return CharacterGridItem(character: character);
+                    return CharacterGridItem(character: character, characterViewModel: characterViewModel);
                   },
                 ),
               ),
             ),
             Obx(
-              () => characterViewModel.isLoading.value
+              () => characterViewModel.isLoadingList.value
                   ? const Center(
                       child: Padding(
                         padding: EdgeInsets.all(64.0),
@@ -135,8 +135,9 @@ class CharacterSearchDelegate extends SearchDelegate<String> {
 
 class CharacterGridItem extends StatelessWidget {
   final Character character;
+  final CharacterViewModel characterViewModel;
 
-  const CharacterGridItem({super.key, required this.character});
+  const CharacterGridItem({super.key, required this.character, required this.characterViewModel});
 
   @override
   Widget build(BuildContext context) {
@@ -147,6 +148,7 @@ class CharacterGridItem extends StatelessWidget {
           MaterialPageRoute(
             builder: (context) => CharacterDetailScreen(
               character: character,
+              characterViewModel: characterViewModel,
             ),
           ),
         );

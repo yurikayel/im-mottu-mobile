@@ -2,97 +2,120 @@ import 'package:dio/dio.dart';
 import 'package:im_mottu_mobile/index.dart';
 
 class MarvelBindings extends Bindings {
-  // Private constructor to prevent external instantiation
   MarvelBindings._();
 
-  // Singleton instance
   static final MarvelBindings _instance = MarvelBindings._();
 
-  // Factory method to access the singleton instance
   factory MarvelBindings() => _instance;
 
-  /// Gets the single instance of [MarvelBindings].
   static MarvelBindings get instance => _instance;
 
   @override
   void dependencies() {
-    _initCharacter();
-    _initComic();
-    _initCreator();
-    _initEvent();
-    _initSeries();
-    _initStory();
+    final dio = createDio();
+
+    _initializeComicModule(dio);
+    _initializeCreatorModule(dio);
+    _initializeEventModule(dio);
+    _initializeSeriesModule(dio);
+    _initializeStoryModule(dio);
+    _initializeCharacterModule(dio);
   }
 
-  void _initCharacter() {
-    Get.put<ICharacterRemote>(ICharacterRemote(Dio()));
-    Get.put<ICharacterRepository>(
-      CharacterRepository(
-        publicApiKey: dotenv.env['PUBLIC_API_KEY']!,
-        privateApiKey: dotenv.env['PRIVATE_API_KEY']!,
-        characterRemote: Get.find<ICharacterRemote>(),
+  void _initializeComicModule(Dio dio) {
+    _initializeModule<IComicRemote, IComicRepository, ComicRepository,
+        ComicViewModel>(
+      createRemote: () => IComicRemote(dio),
+      createRepository: (remote) => ComicRepository(
+        publicApiKey: apiKeys.publicApiKey,
+        privateApiKey: apiKeys.privateApiKey,
+        comicRemote: remote,
       ),
+      createViewModel: (repo) => ComicViewModel(repo),
     );
-    Get.put(CharacterViewModel(Get.find<ICharacterRepository>()));
   }
 
-  void _initComic() {
-    Get.put<IComicRemote>(IComicRemote(Dio()));
-    Get.put<IComicRepository>(
-      ComicRepository(
-        publicApiKey: dotenv.env['PUBLIC_API_KEY']!,
-        privateApiKey: dotenv.env['PRIVATE_API_KEY']!,
-        comicRemote: Get.find<IComicRemote>(),
+  void _initializeCreatorModule(Dio dio) {
+    _initializeModule<ICreatorRemote, ICreatorRepository, CreatorRepository,
+        CreatorViewModel>(
+      createRemote: () => ICreatorRemote(dio),
+      createRepository: (remote) => CreatorRepository(
+        publicApiKey: apiKeys.publicApiKey,
+        privateApiKey: apiKeys.privateApiKey,
+        creatorRemote: remote,
       ),
+      createViewModel: (repo) => CreatorViewModel(repo),
     );
-    Get.put(ComicViewModel(Get.find<IComicRepository>()));
   }
 
-  void _initCreator() {
-    Get.put<ICreatorRemote>(ICreatorRemote(Dio()));
-    Get.put<ICreatorRepository>(
-      CreatorRepository(
-        publicApiKey: dotenv.env['PUBLIC_API_KEY']!,
-        privateApiKey: dotenv.env['PRIVATE_API_KEY']!,
-        creatorRemote: Get.find<ICreatorRemote>(),
+  void _initializeEventModule(Dio dio) {
+    _initializeModule<IEventRemote, IEventRepository, EventRepository,
+        EventViewModel>(
+      createRemote: () => IEventRemote(dio),
+      createRepository: (remote) => EventRepository(
+        publicApiKey: apiKeys.publicApiKey,
+        privateApiKey: apiKeys.privateApiKey,
+        eventRemote: remote,
       ),
+      createViewModel: (repo) => EventViewModel(repo),
     );
-    Get.put(CreatorViewModel(Get.find<ICreatorRepository>()));
   }
 
-  void _initEvent() {
-    Get.put<IEventRemote>(IEventRemote(Dio()));
-    Get.put<IEventRepository>(
-      EventRepository(
-        publicApiKey: dotenv.env['PUBLIC_API_KEY']!,
-        privateApiKey: dotenv.env['PRIVATE_API_KEY']!,
-        eventRemote: Get.find<IEventRemote>(),
+  void _initializeSeriesModule(Dio dio) {
+    _initializeModule<ISeriesRemote, ISeriesRepository, SeriesRepository,
+        SeriesViewModel>(
+      createRemote: () => ISeriesRemote(dio),
+      createRepository: (remote) => SeriesRepository(
+        publicApiKey: apiKeys.publicApiKey,
+        privateApiKey: apiKeys.privateApiKey,
+        seriesRemote: remote,
       ),
+      createViewModel: (repo) => SeriesViewModel(repo),
     );
-    Get.put(EventViewModel(Get.find<IEventRepository>()));
   }
 
-  void _initSeries() {
-    Get.put<ISeriesRemote>(ISeriesRemote(Dio()));
-    Get.put<ISeriesRepository>(
-      SeriesRepository(
-        publicApiKey: dotenv.env['PUBLIC_API_KEY']!,
-        privateApiKey: dotenv.env['PRIVATE_API_KEY']!,
-        seriesRemote: Get.find<ISeriesRemote>(),
+  void _initializeStoryModule(Dio dio) {
+    _initializeModule<IStoryRemote, IStoryRepository, StoryRepository,
+        StoryViewModel>(
+      createRemote: () => IStoryRemote(dio),
+      createRepository: (remote) => StoryRepository(
+        publicApiKey: apiKeys.publicApiKey,
+        privateApiKey: apiKeys.privateApiKey,
+        storyRemote: remote,
       ),
+      createViewModel: (repo) => StoryViewModel(repo),
     );
-    Get.put(SeriesViewModel(Get.find<ISeriesRepository>()));
   }
 
-  void _initStory() {
-    Get.put<IStoryRemote>(IStoryRemote(Dio()));
-    Get.put<IStoryRepository>(
-      StoryRepository(
-        publicApiKey: dotenv.env['PUBLIC_API_KEY']!,
-        privateApiKey: dotenv.env['PRIVATE_API_KEY']!,
-        storyRemote: Get.find<IStoryRemote>(),
+  void _initializeCharacterModule(Dio dio) {
+    _initializeModule<ICharacterRemote, ICharacterRepository,
+        CharacterRepository, CharacterViewModel>(
+      createRemote: () => ICharacterRemote(dio),
+      createRepository: (remote) => CharacterRepository(
+        publicApiKey: apiKeys.publicApiKey,
+        privateApiKey: apiKeys.privateApiKey,
+        characterRemote: remote,
+      ),
+      createViewModel: (repo) => CharacterViewModel(
+        repo,
+        Get.find<IComicRepository>(),
+        Get.find<IEventRepository>(),
+        Get.find<ISeriesRepository>(),
+        Get.find<IStoryRepository>(),
+        Get.find<ICreatorRepository>(),
       ),
     );
-    Get.put(StoryViewModel(Get.find<IStoryRepository>()));
+  }
+
+  void _initializeModule<TRemote, TRepository, TRepoImpl, TViewModel>({
+    required TRemote Function() createRemote,
+    required TRepository Function(TRemote remote) createRepository,
+    required TViewModel Function(TRepository repo) createViewModel,
+  }) {
+    final remote = createRemote();
+    Get.put(remote);
+    final repository = createRepository(remote);
+    Get.put(repository);
+    Get.put(createViewModel(repository));
   }
 }

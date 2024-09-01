@@ -64,4 +64,12 @@ abstract class ICharacterRemote {
     @Query('apikey') required String apiKey,
     @Query('hash') required String hash,
   });
+
+  @GET('/creators/{creatorId}/characters')
+  Future<CharacterDataWrapper> fetchCharactersByCreator({
+    @Path('creatorId') required int creatorId,
+    @Query('ts') required String timestamp,
+    @Query('apikey') required String apiKey,
+    @Query('hash') required String hash,
+  });
 }

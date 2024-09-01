@@ -5,11 +5,6 @@ import 'package:im_mottu_mobile/index.dart';
 /// This interface defines methods for fetching characters and character-related data
 /// with various filtering options.
 abstract class ICharacterRepository {
-  /// Generates an MD5 hash for Marvel API authentication.
-  ///
-  /// The [timestamp] is used in the hash generation process along with the public
-  /// and private API keys.
-  String generateHash(String timestamp);
 
   /// Fetches characters from the Marvel API with optional filtering parameters.
   ///
@@ -56,4 +51,9 @@ abstract class ICharacterRepository {
   ///
   /// [storyId] is the unique identifier of the story to fetch characters from.
   Future<CharacterDataWrapper> fetchCharactersInStory(int storyId);
+
+  /// Fetches a list of characters related to a specific creator.
+  ///
+  /// [creatorId] is the unique identifier of the creator to fetch characters related to.
+  Future<CharacterDataWrapper> fetchCharactersByCreator(int creatorId);
 }

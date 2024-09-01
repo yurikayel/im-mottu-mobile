@@ -1,6 +1,6 @@
-import 'package:dio/dio.dart';
-import 'package:retrofit/retrofit.dart';
 import 'package:im_mottu_mobile/index.dart';
+import 'package:retrofit/http.dart';
+import 'package:dio/dio.dart';
 
 part 'i_creator_remote.g.dart';
 
@@ -50,6 +50,14 @@ abstract class ICreatorRemote {
   @GET('/events/{eventId}/creators')
   Future<CreatorDataWrapper> fetchCreatorsInEvent({
     @Path('eventId') required int eventId,
+    @Query('ts') required String timestamp,
+    @Query('apikey') required String apiKey,
+    @Query('hash') required String hash,
+  });
+
+  @GET('/characters/{characterId}/creators')
+  Future<CreatorDataWrapper> fetchCreatorsByCharacter({
+    @Path('characterId') required int characterId,
     @Query('ts') required String timestamp,
     @Query('apikey') required String apiKey,
     @Query('hash') required String hash,

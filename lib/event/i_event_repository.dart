@@ -22,4 +22,6 @@ abstract class IEventRepository {
   Future<EventDataWrapper> fetchEventsBySeries(int seriesId);
 
   Future<EventDataWrapper> fetchEventsByStory(int storyId);
+
+  Future<EventDataWrapper> fetchEventsByCharacter(int characterId);
 }

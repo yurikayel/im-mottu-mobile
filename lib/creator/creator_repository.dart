@@ -91,4 +91,17 @@ class CreatorRepository implements ICreatorRepository {
       hash: hash,
     );
   }
+
+  @override
+  Future<CreatorDataWrapper> fetchCreatorsByCharacter(int characterId) async {
+    final timestamp = DateTime.now().toIso8601String();
+    final hash = generateHash(timestamp, privateApiKey, publicApiKey);
+
+    return await creatorRemote.fetchCreatorsByCharacter(
+      characterId: characterId,
+      timestamp: timestamp,
+      apiKey: publicApiKey,
+      hash: hash,
+    );
+  }
 }

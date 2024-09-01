@@ -19,4 +19,6 @@ abstract class ICreatorRepository {
   Future<CreatorDataWrapper> fetchCreatorsBySeries(int seriesId);
 
   Future<CreatorDataWrapper> fetchCreatorsByEvent(int eventId);
+
+  Future<CreatorDataWrapper> fetchCreatorsByCharacter(int characterId);
 }

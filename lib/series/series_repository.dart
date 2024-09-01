@@ -108,4 +108,17 @@ class SeriesRepository implements ISeriesRepository {
       hash: hash,
     );
   }
+
+  @override
+  Future<SeriesDataWrapper> fetchSeriesByCharacter(int characterId) async {
+    final timestamp = DateTime.now().millisecondsSinceEpoch.toString();
+    final hash = generateHash(timestamp, _privateApiKey, _publicApiKey);
+
+    return await _seriesRemote.fetchSeriesByCharacter(
+      characterId,
+      timestamp: timestamp,
+      apiKey: _publicApiKey,
+      hash: hash,
+    );
+  }
 }

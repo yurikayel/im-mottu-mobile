@@ -6,7 +6,7 @@ import 'package:im_mottu_mobile/index.dart';
 class CharacterRepository implements ICharacterRepository {
   final String publicApiKey;
   final String privateApiKey;
-  final ICharacterRemote _marvelRemote;
+  final ICharacterRemote _characterRemote;
 
   /// Creates an instance of [CharacterRepository].
   ///
@@ -16,17 +16,8 @@ class CharacterRepository implements ICharacterRepository {
     required this.publicApiKey,
     required this.privateApiKey,
     required ICharacterRemote characterRemote,
-  }) : _marvelRemote = characterRemote;
+  }) : _characterRemote = characterRemote;
 
-  @override
-  String generateHash(String timestamp) {
-    final message = '$timestamp$privateApiKey$publicApiKey';
-    final bytes = utf8.encode(message);
-    final digest = md5.convert(bytes);
-    return digest.toString();
-  }
-
-  /// Fetches characters from the Marvel API.
   @override
   Future<CharacterDataWrapper> fetchCharacters({
     String? name,
@@ -41,9 +32,10 @@ class CharacterRepository implements ICharacterRepository {
     int? offset = 0,
   }) async {
     final timestamp = DateTime.now().millisecondsSinceEpoch ~/ 1000;
-    final hash = generateHash(timestamp.toString());
+    final hash =
+        generateHash(timestamp.toString(), privateApiKey, publicApiKey);
 
-    final response = await _marvelRemote.fetchCharacters(
+    final response = await _characterRemote.fetchCharacters(
       name: name,
       nameStartsWith: nameStartsWith,
       modifiedSince: modifiedSince?.toIso8601String(),
@@ -66,9 +58,10 @@ class CharacterRepository implements ICharacterRepository {
   @override
   Future<CharacterDataWrapper> fetchCharacterById(int characterId) async {
     final timestamp = DateTime.now().millisecondsSinceEpoch ~/ 1000;
-    final hash = generateHash(timestamp.toString());
+    final hash =
+        generateHash(timestamp.toString(), privateApiKey, publicApiKey);
 
-    final response = await _marvelRemote.fetchCharacterById(
+    final response = await _characterRemote.fetchCharacterById(
       characterId: characterId,
       apiKey: publicApiKey,
       timestamp: timestamp.toString(),
@@ -82,9 +75,10 @@ class CharacterRepository implements ICharacterRepository {
   @override
   Future<CharacterDataWrapper> fetchCharactersInComic(int comicId) async {
     final timestamp = DateTime.now().millisecondsSinceEpoch ~/ 1000;
-    final hash = generateHash(timestamp.toString());
+    final hash =
+        generateHash(timestamp.toString(), privateApiKey, publicApiKey);
 
-    final response = await _marvelRemote.fetchCharactersInComic(
+    final response = await _characterRemote.fetchCharactersInComic(
       comicId: comicId,
       apiKey: publicApiKey,
       timestamp: timestamp.toString(),
@@ -98,9 +92,10 @@ class CharacterRepository implements ICharacterRepository {
   @override
   Future<CharacterDataWrapper> fetchCharactersInSeries(int seriesId) async {
     final timestamp = DateTime.now().millisecondsSinceEpoch ~/ 1000;
-    final hash = generateHash(timestamp.toString());
+    final hash =
+        generateHash(timestamp.toString(), privateApiKey, publicApiKey);
 
-    final response = await _marvelRemote.fetchCharactersInSeries(
+    final response = await _characterRemote.fetchCharactersInSeries(
       seriesId: seriesId,
       apiKey: publicApiKey,
       timestamp: timestamp.toString(),
@@ -114,9 +109,10 @@ class CharacterRepository implements ICharacterRepository {
   @override
   Future<CharacterDataWrapper> fetchCharactersInEvent(int eventId) async {
     final timestamp = DateTime.now().millisecondsSinceEpoch ~/ 1000;
-    final hash = generateHash(timestamp.toString());
+    final hash =
+        generateHash(timestamp.toString(), privateApiKey, publicApiKey);
 
-    final response = await _marvelRemote.fetchCharactersInEvent(
+    final response = await _characterRemote.fetchCharactersInEvent(
       eventId: eventId,
       apiKey: publicApiKey,
       timestamp: timestamp.toString(),
@@ -130,10 +126,28 @@ class CharacterRepository implements ICharacterRepository {
   @override
   Future<CharacterDataWrapper> fetchCharactersInStory(int storyId) async {
     final timestamp = DateTime.now().millisecondsSinceEpoch ~/ 1000;
-    final hash = generateHash(timestamp.toString());
+    final hash =
+        generateHash(timestamp.toString(), privateApiKey, publicApiKey);
 
-    final response = await _marvelRemote.fetchCharactersInStory(
+    final response = await _characterRemote.fetchCharactersInStory(
       storyId: storyId,
+      apiKey: publicApiKey,
+      timestamp: timestamp.toString(),
+      hash: hash,
+    );
+
+    return response;
+  }
+
+  /// Fetches a list of characters created by a specific creator.
+  @override
+  Future<CharacterDataWrapper> fetchCharactersByCreator(int creatorId) async {
+    final timestamp = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+    final hash =
+        generateHash(timestamp.toString(), privateApiKey, publicApiKey);
+
+    final response = await _characterRemote.fetchCharactersByCreator(
+      creatorId: creatorId,
       apiKey: publicApiKey,
       timestamp: timestamp.toString(),
       hash: hash,

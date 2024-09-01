@@ -26,41 +26,49 @@ abstract class ISeriesRemote {
 
   @GET("/series/{seriesId}")
   Future<SeriesDataWrapper> fetchSeriesById(
-      @Path("seriesId") int seriesId, {
-        @Query("ts") required String timestamp,
-        @Query("apikey") required String apiKey,
-        @Query("hash") required String hash,
-      });
+    @Path("seriesId") int seriesId, {
+    @Query("ts") required String timestamp,
+    @Query("apikey") required String apiKey,
+    @Query("hash") required String hash,
+  });
 
   @GET("/series")
   Future<SeriesDataWrapper> fetchSeriesByComic(
-      @Query("comics") int comicId, {
-        @Query("ts") required String timestamp,
-        @Query("apikey") required String apiKey,
-        @Query("hash") required String hash,
-      });
+    @Query("comics") int comicId, {
+    @Query("ts") required String timestamp,
+    @Query("apikey") required String apiKey,
+    @Query("hash") required String hash,
+  });
 
   @GET("/series")
   Future<SeriesDataWrapper> fetchSeriesByEvent(
-      @Query("events") int eventId, {
-        @Query("ts") required String timestamp,
-        @Query("apikey") required String apiKey,
-        @Query("hash") required String hash,
-      });
+    @Query("events") int eventId, {
+    @Query("ts") required String timestamp,
+    @Query("apikey") required String apiKey,
+    @Query("hash") required String hash,
+  });
 
   @GET("/series")
   Future<SeriesDataWrapper> fetchSeriesByCreator(
-      @Query("creators") int creatorId, {
-        @Query("ts") required String timestamp,
-        @Query("apikey") required String apiKey,
-        @Query("hash") required String hash,
-      });
+    @Query("creators") int creatorId, {
+    @Query("ts") required String timestamp,
+    @Query("apikey") required String apiKey,
+    @Query("hash") required String hash,
+  });
 
   @GET("/series")
   Future<SeriesDataWrapper> fetchSeriesByStory(
-      @Query("stories") int storyId, {
-        @Query("ts") required String timestamp,
-        @Query("apikey") required String apiKey,
-        @Query("hash") required String hash,
-      });
+    @Query("stories") int storyId, {
+    @Query("ts") required String timestamp,
+    @Query("apikey") required String apiKey,
+    @Query("hash") required String hash,
+  });
+
+  @GET("/series")
+  Future<SeriesDataWrapper> fetchSeriesByCharacter(
+    @Query("characters") int characterId, {
+    @Query("ts") required String timestamp,
+    @Query("apikey") required String apiKey,
+    @Query("hash") required String hash,
+  });
 }

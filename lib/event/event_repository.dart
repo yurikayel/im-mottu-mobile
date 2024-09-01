@@ -48,7 +48,7 @@ class EventRepository implements IEventRepository {
     final hash = generateHash(timestamp, privateApiKey, publicApiKey);
 
     return await eventRemote.fetchEventById(
-      eventId,
+      eventId: eventId,
       timestamp: timestamp,
       apiKey: publicApiKey,
       hash: hash,
@@ -61,7 +61,7 @@ class EventRepository implements IEventRepository {
     final hash = generateHash(timestamp, privateApiKey, publicApiKey);
 
     return await eventRemote.fetchEventsByComic(
-      comicId,
+      comicId: comicId,
       timestamp: timestamp,
       apiKey: publicApiKey,
       hash: hash,
@@ -74,7 +74,7 @@ class EventRepository implements IEventRepository {
     final hash = generateHash(timestamp, privateApiKey, publicApiKey);
 
     return await eventRemote.fetchEventsByCreator(
-      creatorId,
+      creatorId: creatorId,
       timestamp: timestamp,
       apiKey: publicApiKey,
       hash: hash,
@@ -87,7 +87,7 @@ class EventRepository implements IEventRepository {
     final hash = generateHash(timestamp, privateApiKey, publicApiKey);
 
     return await eventRemote.fetchEventsBySeries(
-      seriesId,
+      seriesId: seriesId,
       timestamp: timestamp,
       apiKey: publicApiKey,
       hash: hash,
@@ -100,7 +100,20 @@ class EventRepository implements IEventRepository {
     final hash = generateHash(timestamp, privateApiKey, publicApiKey);
 
     return await eventRemote.fetchEventsByStory(
-      storyId,
+      storyId: storyId,
+      timestamp: timestamp,
+      apiKey: publicApiKey,
+      hash: hash,
+    );
+  }
+
+  @override
+  Future<EventDataWrapper> fetchEventsByCharacter(int characterId) async {
+    final timestamp = DateTime.now().toIso8601String();
+    final hash = generateHash(timestamp, privateApiKey, publicApiKey);
+
+    return await eventRemote.fetchEventsByCharacter(
+      characterId: characterId,
       timestamp: timestamp,
       apiKey: publicApiKey,
       hash: hash,
