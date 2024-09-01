@@ -1,5 +1,3 @@
-import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:im_mottu_mobile/index.dart';
 
 class HomeScreen extends StatefulWidget {
