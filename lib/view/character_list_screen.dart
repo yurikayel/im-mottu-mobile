@@ -1,64 +1,9 @@
 import 'package:im_mottu_mobile/index.dart';
 
-class CharacterListScreen extends StatefulWidget {
-  const CharacterListScreen({super.key});
+class CharacterListScreen extends StatelessWidget {
+  final CharacterViewModel characterViewModel;
 
-  @override
-  _CharacterListScreenState createState() => _CharacterListScreenState();
-}
-
-class _CharacterListScreenState extends State<CharacterListScreen> {
-  final MarvelService _apiService = MarvelService();
-  final TextEditingController _searchController = TextEditingController();
-  String _searchQuery = '';
-  int _offset = 0;
-  final int _limit = 20;
-  bool _isLoading = false;
-  final List<Character> _characters = [];
-  Timer? _debounce;
-
-  @override
-  void initState() {
-    super.initState();
-    _fetchCharacters();
-  }
-
-  void _fetchCharacters() {
-    if (_isLoading) return;
-    setState(() {
-      _isLoading = true;
-    });
-    _apiService
-        .fetchCharacters(
-      nameStartsWith: _searchQuery,
-      limit: _limit,
-      offset: _offset,
-    )
-        .then((data) {
-      setState(() {
-        _characters.addAll(data.data.results);
-        _offset += _limit;
-        _isLoading = false;
-      });
-    }).catchError((error) {
-      setState(() {
-        _isLoading = false;
-      });
-      // Handle error
-    });
-  }
-
-  void _onSearchChanged() {
-    if (_debounce?.isActive ?? false) _debounce!.cancel();
-    _debounce = Timer(const Duration(milliseconds: 300), () {
-      setState(() {
-        _searchQuery = _searchController.text;
-        _offset = 0;
-        _characters.clear();
-        _fetchCharacters();
-      });
-    });
-  }
+  const CharacterListScreen({super.key, required this.characterViewModel});
 
   @override
   Widget build(BuildContext context) {
@@ -72,8 +17,7 @@ class _CharacterListScreenState extends State<CharacterListScreen> {
               showSearch(
                 context: context,
                 delegate: CharacterSearchDelegate(
-                  searchController: _searchController,
-                  onSearchChanged: _onSearchChanged,
+                  onSearchQueryChanged: characterViewModel.onSearchChanged,
                 ),
               );
             },
@@ -82,48 +26,64 @@ class _CharacterListScreenState extends State<CharacterListScreen> {
       ),
       body: NotificationListener<ScrollNotification>(
         onNotification: (scrollInfo) {
-          if (!_isLoading &&
+          if (!characterViewModel.isLoading.value &&
               scrollInfo.metrics.pixels == scrollInfo.metrics.maxScrollExtent) {
-            _fetchCharacters();
+            characterViewModel.fetchCharacters();
             return true;
           }
           return false;
         },
-        child: _characters.isEmpty
-            ? const Center(child: CircularProgressIndicator())
-            : GridView.builder(
-                padding: const EdgeInsets.all(8.0),
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount:
-                      MediaQuery.of(context).size.width > 600 ? 4 : 2,
-                  crossAxisSpacing: 8.0,
-                  mainAxisSpacing: 8.0,
-                  childAspectRatio:
-                      MediaQuery.of(context).size.width > 600 ? 0.6 : 0.8,
+        child: Column(
+          children: [
+            Expanded(
+              child: Obx(
+                () => GridView.builder(
+                  padding: const EdgeInsets.all(8.0),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount:
+                        MediaQuery.of(context).size.width > 600 ? 4 : 2,
+                    crossAxisSpacing: 8.0,
+                    mainAxisSpacing: 8.0,
+                    childAspectRatio:
+                        MediaQuery.of(context).size.width > 600 ? 0.6 : 0.8,
+                  ),
+                  itemCount: characterViewModel.characters.length,
+                  itemBuilder: (context, index) {
+                    final character = characterViewModel.characters[index];
+                    return CharacterGridItem(character: character);
+                  },
                 ),
-                itemCount: _characters.length,
-                itemBuilder: (context, index) {
-                  final character = _characters[index];
-                  return CharacterGridItem(character: character);
-                },
               ),
+            ),
+            Obx(
+              () => characterViewModel.isLoading.value
+                  ? const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(64.0),
+                        child: CircularProgressIndicator(),
+                      ),
+                    )
+                  : const SizedBox.shrink(),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
 class CharacterSearchDelegate extends SearchDelegate<String> {
-  final TextEditingController searchController;
-  final VoidCallback onSearchChanged;
+  final void Function(String query) onSearchQueryChanged;
 
   CharacterSearchDelegate({
-    required this.searchController,
-    required this.onSearchChanged,
+    required this.onSearchQueryChanged,
   });
 
   @override
   Widget buildSuggestions(BuildContext context) {
-    final suggestions = <String>[]; // Populate with actual suggestions
+    // You might want to provide actual suggestions here
+    final suggestions = <String>[];
+
     return ListView.builder(
       itemCount: suggestions.length,
       itemBuilder: (context, index) {
@@ -131,9 +91,9 @@ class CharacterSearchDelegate extends SearchDelegate<String> {
         return ListTile(
           title: Text(suggestion),
           onTap: () {
-            searchController.text = suggestion;
             query = suggestion;
-            onSearchChanged();
+            onSearchQueryChanged(query);
+            close(context, suggestion);
           },
         );
       },
@@ -142,19 +102,21 @@ class CharacterSearchDelegate extends SearchDelegate<String> {
 
   @override
   Widget buildResults(BuildContext context) {
-    onSearchChanged();
-    return Container(); // Placeholder
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      onSearchQueryChanged(query);
+      close(context, query);
+    });
+    return Container();
   }
 
   @override
   List<Widget>? buildActions(BuildContext context) {
     return [
       IconButton(
-        icon: const Icon(Icons.clear),
+        icon: const Icon(Icons.close),
         onPressed: () {
-          searchController.clear();
           query = '';
-          onSearchChanged();
+          onSearchQueryChanged(query);
         },
       ),
     ];
@@ -165,7 +127,7 @@ class CharacterSearchDelegate extends SearchDelegate<String> {
     return IconButton(
       icon: const Icon(Icons.arrow_back),
       onPressed: () {
-        Navigator.pop(context);
+        close(context, 'close');
       },
     );
   }
