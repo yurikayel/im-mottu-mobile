@@ -63,9 +63,10 @@ class EventDataContainer {
       limit: json['limit'] as int,
       total: json['total'] as int,
       count: json['count'] as int,
-      results: (json['results'] as List<dynamic>)
-          .map((item) => Event.fromJson(item as Map<String, dynamic>))
-          .toList(),
+      results: (json['results'] as List<dynamic>?)
+              ?.map((item) => Event.fromJson(item as Map<String, dynamic>))
+              .toList() ??
+          [],
     );
   }
 
@@ -83,39 +84,45 @@ class EventDataContainer {
 class Event {
   final int id;
   final String title;
-  final String description;
+  final String? description;
   final String resourceURI;
   final List<EventUrl> urls;
   final DateTime modified;
   final DateTime? start;
   final DateTime? end;
-  final EventThumb thumbnail;
+  final EventThumb? thumbnail;
 
   Event({
     required this.id,
     required this.title,
-    required this.description,
+    this.description,
     required this.resourceURI,
     required this.urls,
     required this.modified,
     this.start,
     this.end,
-    required this.thumbnail,
+    this.thumbnail,
   });
 
   factory Event.fromJson(Map<String, dynamic> json) {
     return Event(
       id: json['id'] as int,
       title: json['title'] as String,
-      description: json['description'] as String,
-      resourceURI: json['resourceURI'] as String,
-      urls: (json['urls'] as List<dynamic>)
-          .map((item) => EventUrl.fromJson(item as Map<String, dynamic>))
-          .toList(),
-      modified: DateTime.parse(json['modified'] as String),
-      start: json['start'] != null ? DateTime.parse(json['start'] as String) : null,
-      end: json['end'] != null ? DateTime.parse(json['end'] as String) : null,
-      thumbnail: EventThumb.fromJson(json['thumbnail'] as Map<String, dynamic>),
+      description: json['description'] as String?,
+      resourceURI: json['resourceURI'] as String? ?? '',
+      urls: (json['urls'] as List<dynamic>?)
+              ?.map((item) => EventUrl.fromJson(item as Map<String, dynamic>))
+              .toList() ??
+          [],
+      modified: DateTime.tryParse(json['modified'] as String) ?? DateTime.now(),
+      start: json['start'] != null
+          ? DateTime.tryParse(json['start'] as String)
+          : null,
+      end:
+          json['end'] != null ? DateTime.tryParse(json['end'] as String) : null,
+      thumbnail: json['thumbnail'] != null
+          ? EventThumb.fromJson(json['thumbnail'] as Map<String, dynamic>)
+          : null,
     );
   }
 
@@ -129,7 +136,7 @@ class Event {
       'modified': modified.toIso8601String(),
       'start': start?.toIso8601String(),
       'end': end?.toIso8601String(),
-      'thumbnail': thumbnail.toJson(),
+      'thumbnail': thumbnail?.toJson(),
     };
   }
 }
@@ -145,8 +152,8 @@ class EventUrl {
 
   factory EventUrl.fromJson(Map<String, dynamic> json) {
     return EventUrl(
-      type: json['type'] as String,
-      url: json['url'] as String,
+      type: json['type'] as String? ?? '',
+      url: json['url'] as String? ?? '',
     );
   }
 
@@ -169,8 +176,8 @@ class EventThumb {
 
   factory EventThumb.fromJson(Map<String, dynamic> json) {
     return EventThumb(
-      path: json['path'] as String,
-      extension: json['extension'] as String,
+      path: json['path'] as String? ?? '',
+      extension: json['extension'] as String? ?? '',
     );
   }
 
