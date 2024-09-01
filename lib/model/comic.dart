@@ -63,9 +63,9 @@ class ComicDataContainer {
       limit: json['limit'] as int,
       total: json['total'] as int,
       count: json['count'] as int,
-      results: (json['results'] as List<dynamic>)
-          .map((item) => Comic.fromJson(item as Map<String, dynamic>))
-          .toList(),
+      results: (json['results'] as List<dynamic>?)
+          ?.map((item) => Comic.fromJson(item as Map<String, dynamic>))
+          .toList() ?? [],
     );
   }
 
@@ -98,6 +98,7 @@ class Comic {
   final List<TextObject> textObjects;
   final String resourceURI;
   final List<ComicUrl> urls;
+  final Thumbnail? thumbnail; // Handle thumbnail as nullable
 
   Comic({
     required this.id,
@@ -117,17 +118,18 @@ class Comic {
     required this.textObjects,
     required this.resourceURI,
     required this.urls,
+    this.thumbnail, // Initialize thumbnail as nullable
   });
 
   factory Comic.fromJson(Map<String, dynamic> json) {
     return Comic(
       id: json['id'] as int,
       digitalId: json['digitalId'] as int,
-      title: json['title'] as String,
+      title: (json['title'] as String?) ?? 'Null title' ,
       issueNumber: json['issueNumber'] as int,
       variantDescription: json['variantDescription'] as String?,
-      description: json['description'] as String,
-      modified: DateTime.parse(json['modified'] as String),
+      description: json['description'] ?? 'No description',
+      modified: DateTime.tryParse(json['modified']) ?? DateTime.now(),
       isbn: json['isbn'] as String?,
       upc: json['upc'] as String?,
       diamondCode: json['diamondCode'] as String?,
@@ -135,13 +137,16 @@ class Comic {
       issn: json['issn'] as String?,
       format: json['format'] as String?,
       pageCount: json['pageCount'] as int,
-      textObjects: (json['textObjects'] as List<dynamic>)
-          .map((item) => TextObject.fromJson(item as Map<String, dynamic>))
-          .toList(),
-      resourceURI: json['resourceURI'] as String,
-      urls: (json['urls'] as List<dynamic>)
-          .map((item) => ComicUrl.fromJson(item as Map<String, dynamic>))
-          .toList(),
+      textObjects: (json['textObjects'] as List<dynamic>?)
+          ?.map((item) => TextObject.fromJson(item as Map<String, dynamic>))
+          .toList() ?? [],
+      resourceURI: json['resourceURI'] as String? ?? '',
+      urls: (json['urls'] as List<dynamic>?)
+          ?.map((item) => ComicUrl.fromJson(item as Map<String, dynamic>))
+          .toList() ?? [],
+      thumbnail: json['thumbnail'] != null
+          ? Thumbnail.fromJson(json['thumbnail'] as Map<String, dynamic>)
+          : null, // Handle thumbnail being null
     );
   }
 
@@ -164,6 +169,7 @@ class Comic {
       'textObjects': textObjects.map((textObject) => textObject.toJson()).toList(),
       'resourceURI': resourceURI,
       'urls': urls.map((url) => url.toJson()).toList(),
+      'thumbnail': thumbnail?.toJson(), // Handle null thumbnail
     };
   }
 }
@@ -181,9 +187,9 @@ class TextObject {
 
   factory TextObject.fromJson(Map<String, dynamic> json) {
     return TextObject(
-      type: json['type'] as String,
-      language: json['language'] as String,
-      text: json['text'] as String,
+      type: json['type'] as String? ?? '',
+      language: json['language'] as String? ?? '',
+      text: json['text'] as String? ?? '',
     );
   }
 
@@ -207,8 +213,8 @@ class ComicUrl {
 
   factory ComicUrl.fromJson(Map<String, dynamic> json) {
     return ComicUrl(
-      type: json['type'] as String,
-      url: json['url'] as String,
+      type: json['type'] as String? ?? '',
+      url: json['url'] as String? ?? '',
     );
   }
 
@@ -216,6 +222,30 @@ class ComicUrl {
     return {
       'type': type,
       'url': url,
+    };
+  }
+}
+
+class Thumbnail {
+  final String path;
+  final String extension;
+
+  Thumbnail({
+    required this.path,
+    required this.extension,
+  });
+
+  factory Thumbnail.fromJson(Map<String, dynamic> json) {
+    return Thumbnail(
+      path: json['path'] as String? ?? '',
+      extension: json['extension'] as String? ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'path': path,
+      'extension': extension,
     };
   }
 }
