@@ -63,9 +63,9 @@ class CreatorDataContainer {
       limit: json['limit'] as int,
       total: json['total'] as int,
       count: json['count'] as int,
-      results: (json['results'] as List<dynamic>)
-          .map((item) => Creator.fromJson(item as Map<String, dynamic>))
-          .toList(),
+      results: (json['results'] as List<dynamic>?)
+          ?.map((item) => Creator.fromJson(item as Map<String, dynamic>))
+          .toList() ?? [],
     );
   }
 
@@ -83,42 +83,44 @@ class CreatorDataContainer {
 class Creator {
   final int id;
   final String firstName;
-  final String middleName;
+  final String? middleName;
   final String lastName;
-  final String suffix;
+  final String? suffix;
   final String fullName;
   final DateTime modified;
   final String resourceURI;
   final List<Url> urls;
-  final CreatorThumb thumbnail;
+  final CreatorThumb? thumbnail;
 
   Creator({
     required this.id,
     required this.firstName,
-    required this.middleName,
+    this.middleName,
     required this.lastName,
-    required this.suffix,
+    this.suffix,
     required this.fullName,
     required this.modified,
     required this.resourceURI,
     required this.urls,
-    required this.thumbnail,
+    this.thumbnail,
   });
 
   factory Creator.fromJson(Map<String, dynamic> json) {
     return Creator(
       id: json['id'] as int,
       firstName: json['firstName'] as String,
-      middleName: json['middleName'] as String,
+      middleName: json['middleName'] as String?,
       lastName: json['lastName'] as String,
-      suffix: json['suffix'] as String,
+      suffix: json['suffix'] as String?,
       fullName: json['fullName'] as String,
-      modified: DateTime.parse(json['modified'] as String),
-      resourceURI: json['resourceURI'] as String,
-      urls: (json['urls'] as List<dynamic>)
-          .map((item) => Url.fromJson(item as Map<String, dynamic>))
-          .toList(),
-      thumbnail: CreatorThumb.fromJson(json['thumbnail'] as Map<String, dynamic>),
+      modified: DateTime.tryParse(json['modified'] as String) ?? DateTime.now(),
+      resourceURI: json['resourceURI'] as String? ?? '',
+      urls: (json['urls'] as List<dynamic>?)
+          ?.map((item) => Url.fromJson(item as Map<String, dynamic>))
+          .toList() ?? [],
+      thumbnail: json['thumbnail'] != null
+          ? CreatorThumb.fromJson(json['thumbnail'] as Map<String, dynamic>)
+          : null,
     );
   }
 
@@ -133,7 +135,7 @@ class Creator {
       'modified': modified.toIso8601String(),
       'resourceURI': resourceURI,
       'urls': urls.map((url) => url.toJson()).toList(),
-      'thumbnail': thumbnail.toJson(),
+      'thumbnail': thumbnail?.toJson(),
     };
   }
 }
@@ -149,8 +151,8 @@ class Url {
 
   factory Url.fromJson(Map<String, dynamic> json) {
     return Url(
-      type: json['type'] as String,
-      url: json['url'] as String,
+      type: json['type'] as String? ?? '',
+      url: json['url'] as String? ?? '',
     );
   }
 
@@ -173,8 +175,8 @@ class CreatorThumb {
 
   factory CreatorThumb.fromJson(Map<String, dynamic> json) {
     return CreatorThumb(
-      path: json['path'] as String,
-      extension: json['extension'] as String,
+      path: json['path'] as String? ?? '',
+      extension: json['extension'] as String? ?? '',
     );
   }
 
