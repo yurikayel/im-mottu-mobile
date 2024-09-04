@@ -24,48 +24,50 @@ class CharacterListScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: NotificationListener<ScrollNotification>(
-        onNotification: (scrollInfo) {
-          if (!characterViewModel.isLoadingList.value &&
-              scrollInfo.metrics.pixels == scrollInfo.metrics.maxScrollExtent) {
-            characterViewModel.fetchCharacters();
-            return true;
-          }
-          return false;
-        },
-        child: Column(
-          children: [
-            Expanded(
-              child: Obx(
-                () => GridView.builder(
-                  padding: const EdgeInsets.all(8.0),
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount:
-                        MediaQuery.of(context).size.width > 600 ? 4 : 2,
-                    crossAxisSpacing: 8.0,
-                    mainAxisSpacing: 8.0,
-                    childAspectRatio:
-                        MediaQuery.of(context).size.width > 600 ? 0.6 : 0.8,
+      body: Obx(
+        () => NotificationListener<ScrollNotification>(
+          onNotification: (scrollInfo) {
+            if (!characterViewModel.isLoadingList.value &&
+                scrollInfo.metrics.pixels ==
+                    scrollInfo.metrics.maxScrollExtent) {
+              characterViewModel.fetchCharacters();
+              return true;
+            }
+            return false;
+          },
+          child: Column(
+            children: [
+              Expanded(
+                child: Obx(
+                  () => GridView.builder(
+                    padding: const EdgeInsets.all(8.0),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount:
+                          MediaQuery.of(context).size.width > 600 ? 4 : 2,
+                      crossAxisSpacing: 8.0,
+                      mainAxisSpacing: 8.0,
+                      childAspectRatio:
+                          MediaQuery.of(context).size.width > 600 ? 0.6 : 0.8,
+                    ),
+                    itemCount: characterViewModel.characters.length,
+                    itemBuilder: (context, index) {
+                      final character = characterViewModel.characters[index];
+                      return CharacterGridItem(
+                          character: character,
+                          characterViewModel: characterViewModel);
+                    },
                   ),
-                  itemCount: characterViewModel.characters.length,
-                  itemBuilder: (context, index) {
-                    final character = characterViewModel.characters[index];
-                    return CharacterGridItem(character: character, characterViewModel: characterViewModel);
-                  },
                 ),
               ),
-            ),
-            Obx(
-              () => characterViewModel.isLoadingList.value
-                  ? const Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(64.0),
-                        child: CircularProgressIndicator(),
-                      ),
-                    )
-                  : const SizedBox.shrink(),
-            ),
-          ],
+              if (characterViewModel.isLoadingList.value)
+                const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(64.0),
+                    child: CircularProgressIndicator(),
+                  ),
+                )
+            ],
+          ),
         ),
       ),
     );
@@ -137,7 +139,8 @@ class CharacterGridItem extends StatelessWidget {
   final Character character;
   final CharacterViewModel characterViewModel;
 
-  const CharacterGridItem({super.key, required this.character, required this.characterViewModel});
+  const CharacterGridItem(
+      {super.key, required this.character, required this.characterViewModel});
 
   @override
   Widget build(BuildContext context) {

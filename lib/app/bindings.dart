@@ -11,7 +11,7 @@ class MarvelBindings extends Bindings {
   static MarvelBindings get instance => _instance;
 
   @override
-  void dependencies() {
+  void dependencies() async {
     final dio = createDio();
 
     _initializeComicModule(dio);
@@ -19,7 +19,9 @@ class MarvelBindings extends Bindings {
     _initializeEventModule(dio);
     _initializeSeriesModule(dio);
     _initializeStoryModule(dio);
-    _initializeCharacterModule(dio);
+    Future.delayed(const Duration(seconds: 2), () {
+      _initializeCharacterModule(dio);
+    });
   }
 
   void _initializeComicModule(Dio dio) {

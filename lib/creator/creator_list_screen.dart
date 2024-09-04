@@ -26,10 +26,6 @@ class CreatorListScreen extends StatelessWidget {
         ],
       ),
       body: Obx(() {
-        if (creatorViewModel.isLoading.value) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
         if (creatorViewModel.errorMessage.value.isNotEmpty) {
           return Center(child: Text(creatorViewModel.errorMessage.value));
         }
@@ -44,20 +40,32 @@ class CreatorListScreen extends StatelessWidget {
             }
             return false;
           },
-          child: GridView.builder(
-            padding: const EdgeInsets.all(8.0),
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: MediaQuery.of(context).size.width > 600 ? 4 : 2,
-              crossAxisSpacing: 8.0,
-              mainAxisSpacing: 8.0,
-              childAspectRatio:
-                  MediaQuery.of(context).size.width > 600 ? 0.6 : 0.8,
-            ),
-            itemCount: creatorViewModel.creators.length,
-            itemBuilder: (context, index) {
-              final creator = creatorViewModel.creators[index];
-              return CreatorGridItem(creator: creator);
-            },
+          child: Column(
+            children: [
+              Expanded(
+                child: GridView.builder(
+                  padding: const EdgeInsets.all(8.0),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount:
+                        MediaQuery.of(context).size.width > 600 ? 4 : 2,
+                    crossAxisSpacing: 8.0,
+                    mainAxisSpacing: 8.0,
+                    childAspectRatio:
+                        MediaQuery.of(context).size.width > 600 ? 0.6 : 0.8,
+                  ),
+                  itemCount: creatorViewModel.creators.length,
+                  itemBuilder: (context, index) {
+                    final creator = creatorViewModel.creators[index];
+                    return CreatorGridItem(creator: creator);
+                  },
+                ),
+              ),
+              if (creatorViewModel.isLoading.value)
+                const Padding(
+                  padding: EdgeInsets.all(64.0),
+                  child: Center(child: CircularProgressIndicator()),
+                )
+            ],
           ),
         );
       }),

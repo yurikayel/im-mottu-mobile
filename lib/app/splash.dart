@@ -1,6 +1,8 @@
 import 'package:im_mottu_mobile/index.dart';
 
 class SplashScreen extends StatefulWidget {
+  const SplashScreen({super.key});
+
   @override
   _SplashScreenState createState() => _SplashScreenState();
 }
@@ -14,7 +16,7 @@ class _SplashScreenState extends State<SplashScreen>
   void initState() {
     super.initState();
     _controller = AnimationController(
-      duration: const Duration(seconds: 2),
+      duration: const Duration(seconds: 1),
       vsync: this,
     );
     _animation = CurvedAnimation(
@@ -24,7 +26,7 @@ class _SplashScreenState extends State<SplashScreen>
 
     _controller.forward();
 
-    Future.delayed(const Duration(seconds: 3), () {
+    Future.delayed(const Duration(seconds: 1), () {
       _controller.reverse().then((value) {
         Navigator.of(context).pushReplacement(
           PageRouteBuilder(
@@ -34,7 +36,7 @@ class _SplashScreenState extends State<SplashScreen>
                 (context, animation, secondaryAnimation, child) {
               var begin = 0.0;
               var end = 1.0;
-              var curve = Curves.linearToEaseOut;
+              var curve = Curves.easeInOut;
 
               var tween =
                   Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
@@ -63,9 +65,12 @@ class _SplashScreenState extends State<SplashScreen>
       body: FadeTransition(
         opacity: _animation,
         child: Center(
-          child: Image.asset(
-            'assets/images/marvel.jpg',
-            fit: BoxFit.cover,
+          child: Padding(
+            padding: const EdgeInsets.all(48.0),
+            child: Image.asset(
+              'assets/images/marvel.jpg',
+              fit: BoxFit.cover,
+            ),
           ),
         ),
       ),

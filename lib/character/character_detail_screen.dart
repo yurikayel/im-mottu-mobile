@@ -87,9 +87,9 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
       relatedCharacters.sort((a, b) => a.name.compareTo(b.name));
 
       final screenWidth = MediaQuery.of(context).size.width;
-      final crossAxisCount = screenWidth > 1200
+      final crossAxisCount = screenWidth > 800
           ? 6
-          : screenWidth > 800
+          : screenWidth > 500
           ? 4
           : 2;
 
@@ -109,9 +109,9 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
             physics: const NeverScrollableScrollPhysics(),
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: crossAxisCount,
-              crossAxisSpacing: 8.0,
-              mainAxisSpacing: 8.0,
-              childAspectRatio: 2 / 3, // Adjust as needed
+              crossAxisSpacing: 16.0,
+              mainAxisSpacing: 16.0,
+              childAspectRatio: 1 / 2, // Adjust as needed
             ),
             itemCount: relatedCharacters.length,
             itemBuilder: (context, index) {
@@ -125,7 +125,7 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
                         imageUrl:
                         '${relatedCharacter.thumbnail.path}.${relatedCharacter.thumbnail.extension}',
                         placeholder: (context, url) =>
-                        const CircularProgressIndicator(),
+                        const Center(child: CircularProgressIndicator()),
                         errorWidget: (context, url, error) =>
                         const Icon(Icons.error),
                         fit: BoxFit.cover,

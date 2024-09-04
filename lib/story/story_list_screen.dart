@@ -26,18 +26,19 @@ class StoryListScreen extends StatelessWidget {
         ],
       ),
       body: Obx(() {
-        if (storyViewModel.isLoading.value) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
         if (storyViewModel.errorMessage.value.isNotEmpty) {
           return Center(child: Text(storyViewModel.errorMessage.value));
+        }
+
+        if (storyViewModel.isLoading.value && storyViewModel.stories.isEmpty) {
+          return const Center(child: CircularProgressIndicator());
         }
 
         return NotificationListener<ScrollNotification>(
           onNotification: (scrollInfo) {
             if (!storyViewModel.isLoading.value &&
-                scrollInfo.metrics.pixels == scrollInfo.metrics.maxScrollExtent) {
+                scrollInfo.metrics.pixels ==
+                    scrollInfo.metrics.maxScrollExtent) {
               storyViewModel.fetchStories();
               return true;
             }
@@ -49,10 +50,12 @@ class StoryListScreen extends StatelessWidget {
                 child: GridView.builder(
                   padding: const EdgeInsets.all(8.0),
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: MediaQuery.of(context).size.width > 600 ? 4 : 2,
+                    crossAxisCount:
+                        MediaQuery.of(context).size.width > 600 ? 4 : 2,
                     crossAxisSpacing: 8.0,
                     mainAxisSpacing: 8.0,
-                    childAspectRatio: MediaQuery.of(context).size.width > 600 ? 0.6 : 0.8,
+                    childAspectRatio:
+                        MediaQuery.of(context).size.width > 600 ? 0.6 : 0.8,
                   ),
                   itemCount: storyViewModel.stories.length,
                   itemBuilder: (context, index) {
@@ -61,12 +64,11 @@ class StoryListScreen extends StatelessWidget {
                   },
                 ),
               ),
-              if (storyViewModel.isLoading.value)
-                const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(64.0),
-                    child: CircularProgressIndicator(),
-                  ),
+              if (storyViewModel.isLoading.value &&
+                  storyViewModel.stories.isNotEmpty)
+                const Padding(
+                  padding: EdgeInsets.all(64.0),
+                  child: CircularProgressIndicator(),
                 ),
             ],
           ),
@@ -87,7 +89,7 @@ class StorySearchDelegate extends SearchDelegate<String> {
 
   @override
   Widget buildSuggestions(BuildContext context) {
-    final suggestions = <String>[];
+    final suggestions = <String>[]; // Populate with actual suggestions
     return ListView.builder(
       itemCount: suggestions.length,
       itemBuilder: (context, index) {
@@ -97,8 +99,8 @@ class StorySearchDelegate extends SearchDelegate<String> {
           onTap: () {
             searchController.text = suggestion;
             query = suggestion;
-            onSearchQueryChanged(query);
-            Navigator.pop(context);
+            onSearchQueryChanged(query); // Pass the query to parent
+            Navigator.pop(context); // Close the search delegate after selection
           },
         );
       },
@@ -109,10 +111,11 @@ class StorySearchDelegate extends SearchDelegate<String> {
   Widget buildResults(BuildContext context) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       searchController.text = query;
-      onSearchQueryChanged(query);
-      Navigator.pop(context);
+      onSearchQueryChanged(query); // Trigger search with current query
+      Navigator.pop(
+          context); // Close the search delegate after triggering the search
     });
-    return Container();
+    return Container(); // Placeholder, as search results are managed by the parent screen
   }
 
   @override
@@ -121,8 +124,9 @@ class StorySearchDelegate extends SearchDelegate<String> {
       IconButton(
         icon: const Icon(Icons.close),
         onPressed: () {
-          Navigator.pop(context);
+          query = '';
           searchController.clear();
+          onSearchQueryChanged(query); // Clear search results
         },
       ),
     ];
@@ -133,7 +137,7 @@ class StorySearchDelegate extends SearchDelegate<String> {
     return IconButton(
       icon: const Icon(Icons.arrow_back),
       onPressed: () {
-        Navigator.pop(context);
+        close(context, 'close');
       },
     );
   }
@@ -160,30 +164,13 @@ class StoryGridItem extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(
-              child: ClipRRect(
-                borderRadius:
-                const BorderRadius.vertical(top: Radius.circular(8.0)),
-                child: story.thumbnail != null
-                    ? Center(
-                  child: Image.network(
-                    '${story.thumbnail!.path}.${story.thumbnail!.extension}',
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return const Center(
-                        child: Icon(Icons.error),
-                      );
-                    },
-                  ),
-                )
-                    : const Placeholder(),
-              ),
-            ),
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: Text(
                 story.title,
                 style: Theme.of(context).textTheme.bodyMedium,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],

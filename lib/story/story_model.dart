@@ -90,6 +90,10 @@ class Story {
   final DateTime modified;
   final SeriesSummary? series;
   final ComicSummary? originalIssue;
+  final List<ComicSummary>? comics;
+  final List<CharacterSummary>? characters;
+  final List<CreatorSummary>? creators;
+  final List<EventSummary>? events;
   final StoryThumb? thumbnail;
 
   Story({
@@ -101,6 +105,10 @@ class Story {
     required this.modified,
     this.series,
     this.originalIssue,
+    this.comics,
+    this.characters,
+    this.creators,
+    this.events,
     this.thumbnail,
   });
 
@@ -118,6 +126,19 @@ class Story {
       originalIssue: json['originalIssue'] != null
           ? ComicSummary.fromJson(json['originalIssue'] as Map<String, dynamic>)
           : null,
+      comics: (json['comics']['items'] as List<dynamic>?)
+          ?.map((item) => ComicSummary.fromJson(item as Map<String, dynamic>))
+          .toList(),
+      characters: (json['characters']['items'] as List<dynamic>?)
+          ?.map(
+              (item) => CharacterSummary.fromJson(item as Map<String, dynamic>))
+          .toList(),
+      creators: (json['creators']['items'] as List<dynamic>?)
+          ?.map((item) => CreatorSummary.fromJson(item as Map<String, dynamic>))
+          .toList(),
+      events: (json['events']['items'] as List<dynamic>?)
+          ?.map((item) => EventSummary.fromJson(item as Map<String, dynamic>))
+          .toList(),
       thumbnail: json['thumbnail'] != null
           ? StoryThumb.fromJson(json['thumbnail'] as Map<String, dynamic>)
           : null,
@@ -134,6 +155,10 @@ class Story {
       'modified': modified.toIso8601String(),
       'series': series?.toJson(),
       'originalIssue': originalIssue?.toJson(),
+      'comics': comics?.map((comic) => comic.toJson()).toList(),
+      'characters': characters?.map((character) => character.toJson()).toList(),
+      'creators': creators?.map((creator) => creator.toJson()).toList(),
+      'events': events?.map((event) => event.toJson()).toList(),
       'thumbnail': thumbnail?.toJson(),
     };
   }
@@ -174,6 +199,82 @@ class ComicSummary {
 
   factory ComicSummary.fromJson(Map<String, dynamic> json) {
     return ComicSummary(
+      resourceURI: json['resourceURI'] as String? ?? '',
+      name: json['name'] as String? ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'resourceURI': resourceURI,
+      'name': name,
+    };
+  }
+}
+
+class CharacterSummary {
+  final String resourceURI;
+  final String name;
+
+  CharacterSummary({
+    required this.resourceURI,
+    required this.name,
+  });
+
+  factory CharacterSummary.fromJson(Map<String, dynamic> json) {
+    return CharacterSummary(
+      resourceURI: json['resourceURI'] as String? ?? '',
+      name: json['name'] as String? ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'resourceURI': resourceURI,
+      'name': name,
+    };
+  }
+}
+
+class CreatorSummary {
+  final String resourceURI;
+  final String name;
+  final String role;
+
+  CreatorSummary({
+    required this.resourceURI,
+    required this.name,
+    required this.role,
+  });
+
+  factory CreatorSummary.fromJson(Map<String, dynamic> json) {
+    return CreatorSummary(
+      resourceURI: json['resourceURI'] as String? ?? '',
+      name: json['name'] as String? ?? '',
+      role: json['role'] as String? ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'resourceURI': resourceURI,
+      'name': name,
+      'role': role,
+    };
+  }
+}
+
+class EventSummary {
+  final String resourceURI;
+  final String name;
+
+  EventSummary({
+    required this.resourceURI,
+    required this.name,
+  });
+
+  factory EventSummary.fromJson(Map<String, dynamic> json) {
+    return EventSummary(
       resourceURI: json['resourceURI'] as String? ?? '',
       name: json['name'] as String? ?? '',
     );

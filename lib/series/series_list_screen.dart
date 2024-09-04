@@ -26,10 +26,6 @@ class SeriesListScreen extends StatelessWidget {
         ],
       ),
       body: Obx(() {
-        if (seriesViewModel.isLoading.value) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
         if (seriesViewModel.errorMessage.value.isNotEmpty) {
           return Center(child: Text(seriesViewModel.errorMessage.value));
         }

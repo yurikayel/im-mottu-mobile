@@ -26,10 +26,6 @@ class ComicListScreen extends StatelessWidget {
         ],
       ),
       body: Obx(() {
-        if (comicViewModel.isLoading.value) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
         if (comicViewModel.errorMessage.value.isNotEmpty) {
           return Center(child: Text(comicViewModel.errorMessage.value));
         }
@@ -44,20 +40,32 @@ class ComicListScreen extends StatelessWidget {
             }
             return false;
           },
-          child: GridView.builder(
-            padding: const EdgeInsets.all(8.0),
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: MediaQuery.of(context).size.width > 600 ? 4 : 2,
-              crossAxisSpacing: 8.0,
-              mainAxisSpacing: 8.0,
-              childAspectRatio:
-                  MediaQuery.of(context).size.width > 600 ? 0.6 : 0.8,
-            ),
-            itemCount: comicViewModel.comics.length,
-            itemBuilder: (context, index) {
-              final comic = comicViewModel.comics[index];
-              return ComicGridItem(comic: comic);
-            },
+          child: Column(
+            children: [
+              Expanded(
+                child: GridView.builder(
+                  padding: const EdgeInsets.all(8.0),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount:
+                        MediaQuery.of(context).size.width > 600 ? 4 : 2,
+                    crossAxisSpacing: 8.0,
+                    mainAxisSpacing: 8.0,
+                    childAspectRatio:
+                        MediaQuery.of(context).size.width > 600 ? 0.6 : 0.8,
+                  ),
+                  itemCount: comicViewModel.comics.length,
+                  itemBuilder: (context, index) {
+                    final comic = comicViewModel.comics[index];
+                    return ComicGridItem(comic: comic);
+                  },
+                ),
+              ),
+              if (comicViewModel.isLoading.value)
+                const Padding(
+                  padding: EdgeInsets.all(64.0),
+                  child: Center(child: CircularProgressIndicator()),
+                ),
+            ],
           ),
         );
       }),

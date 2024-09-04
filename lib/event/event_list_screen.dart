@@ -26,10 +26,6 @@ class EventListScreen extends StatelessWidget {
         ],
       ),
       body: Obx(() {
-        if (eventViewModel.isLoading.value) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
         if (eventViewModel.errorMessage.value.isNotEmpty) {
           return Center(child: Text(eventViewModel.errorMessage.value));
         }

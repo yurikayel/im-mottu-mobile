@@ -1,13 +1,16 @@
 import "package:im_mottu_mobile/index.dart";
 
 void main() async {
-  // Ensures that the Flutter framework is fully initialized before running the app.
   WidgetsFlutterBinding.ensureInitialized();
+  await loadEnv();
+}
 
-  // Load the .env file
+Future<void> loadEnv() async {
   try {
     await dotenv.load(fileName: '.env').then((_) => runApp(const MarvelApp()));
   } catch (e) {
-    print('Failed to load .env file: $e');
+    if (kDebugMode) {
+      print('Failed to load .env file: $e');
+    }
   }
 }

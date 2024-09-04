@@ -17,6 +17,7 @@ export 'package:retrofit/error_logger.dart';
 
 // APP
 export 'app/app.dart';
+export 'data/data.dart';
 export 'character/character.dart';
 export 'comic/comic.dart';
 export 'creator/creator.dart';
