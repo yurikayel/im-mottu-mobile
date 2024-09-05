@@ -9,6 +9,7 @@ class ComicViewModel extends GetxController {
   var isLoading = false.obs;
   var errorMessage = ''.obs;
   final TextEditingController searchController = TextEditingController();
+  final RxInt offset = 0.obs;
 
   // Constructor
   ComicViewModel(this._comicRepository);
@@ -26,8 +27,7 @@ class ComicViewModel extends GetxController {
   /// [offset] - Pagination offset (default is 0).
   Future<void> fetchComics({
     String? titleStartsWith,
-    int? limit = 20,
-    int? offset = 0,
+    int limit = 20, // Set default limit
   }) async {
     isLoading.value = true;
     errorMessage.value = '';
@@ -36,10 +36,17 @@ class ComicViewModel extends GetxController {
       final response = await _comicRepository.fetchComics(
         titleStartsWith: titleStartsWith,
         limit: limit,
-        offset: offset,
+        offset: offset.value,
       );
 
-      comics.value = response.data?.results ?? [];
+      if (response.data.results.isNotEmpty ?? false) {
+        comics.addAll(response.data.results ?? []);
+        // Increment offset only if data is fetched successfully
+        offset.value += limit;
+      } else {
+        // No more comics to load
+        Get.snackbar('Info', 'No more comics to load');
+      }
     } catch (e) {
       errorMessage.value = 'Failed to load comics: ${e.toString()}';
     } finally {
@@ -72,10 +79,12 @@ class ComicViewModel extends GetxController {
     errorMessage.value = '';
 
     try {
-      final response = await _comicRepository.fetchComicsByCharacter(characterId);
+      final response =
+          await _comicRepository.fetchComicsByCharacter(characterId);
       comics.value = response.data?.results ?? [];
     } catch (e) {
-      errorMessage.value = 'Failed to load comics for character: ${e.toString()}';
+      errorMessage.value =
+          'Failed to load comics for character: ${e.toString()}';
     } finally {
       isLoading.value = false;
     }
@@ -119,6 +128,8 @@ class ComicViewModel extends GetxController {
   ///
   /// [query] - The new search query to filter comics.
   void onSearchQueryChanged(String query) {
-    fetchComics(titleStartsWith: query, limit: 20, offset: 0);
+    comics.value = List.empty();
+    offset.value = 0;
+    fetchComics(titleStartsWith: query, limit: 20);
   }
 }

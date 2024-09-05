@@ -23,7 +23,9 @@ dependencies:
   json_serializable: ^6.8.0
   retrofit_generator: ^8.2.1
   get: ^4.6.6
-  flutter_cache_manager: ^3.4.1
+  graphview: ^1.2.0
+  hive_generator: ^2.0.1
+  path_provider: ^2.1.4
 
 dev_dependencies:
   flutter_test:

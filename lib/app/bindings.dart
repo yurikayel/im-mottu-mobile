@@ -1,5 +1,5 @@
-import 'package:dio/dio.dart';
 import 'package:im_mottu_mobile/index.dart';
+import 'package:dio/dio.dart';
 
 class MarvelBindings extends Bindings {
   MarvelBindings._();
@@ -12,14 +12,14 @@ class MarvelBindings extends Bindings {
 
   @override
   void dependencies() async {
-    final dio = createDio();
+    final dio = Dio()..interceptors.add(CacheInterceptor());
 
     _initializeComicModule(dio);
     _initializeCreatorModule(dio);
     _initializeEventModule(dio);
     _initializeSeriesModule(dio);
     _initializeStoryModule(dio);
-    Future.delayed(const Duration(seconds: 2), () {
+    Future.delayed(const Duration(milliseconds: 1500), () {
       _initializeCharacterModule(dio);
     });
   }

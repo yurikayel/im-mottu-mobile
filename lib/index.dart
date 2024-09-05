@@ -14,6 +14,7 @@ export "package:pretty_dio_logger/pretty_dio_logger.dart";
 export 'package:cached_network_image/cached_network_image.dart';
 export 'package:flutter_dotenv/flutter_dotenv.dart';
 export 'package:retrofit/error_logger.dart';
+export 'package:shared_preferences/shared_preferences.dart';
 
 // APP
 export 'app/app.dart';

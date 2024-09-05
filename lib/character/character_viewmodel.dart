@@ -47,11 +47,16 @@ class CharacterViewModel extends GetxController {
         .fetchCharacters(
       nameStartsWith: searchQuery.value.isNotEmpty ? searchQuery.value : null,
       limit: limit,
-      offset: offset.value,
+      offset: offset.value, // Use current offset
     )
         .then((data) {
-      characters.addAll(data.data.results);
-      offset.value += limit;
+      if (data.data.results.isNotEmpty) {
+        characters.addAll(data.data.results);
+        offset.value += limit; // Increment the offset by limit
+      } else {
+        // No more data, maybe stop further pagination
+        Get.snackbar('Info', 'No more characters to load');
+      }
       isLoadingList.value = false;
     }).catchError((error) {
       isLoadingList.value = false;

@@ -1,4 +1,4 @@
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:im_mottu_mobile/index.dart';
 
 final apiKeys = _ApiKeys._instance;
 
@@ -14,4 +14,14 @@ class _ApiKeys {
 
   // Getter for private API key
   String get privateApiKey => dotenv.env['PRIVATE_API_KEY']!;
+}
+
+Future<void> loadEnv() async {
+  try {
+    await dotenv.load(fileName: '.env');
+  } catch (e) {
+    if (kDebugMode) {
+      print('Failed to load .env file: $e');
+    }
+  }
 }

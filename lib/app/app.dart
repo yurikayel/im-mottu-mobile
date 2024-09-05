@@ -18,7 +18,7 @@ class MarvelApp extends GetMaterialApp {
   ThemeData? get theme => ThemeData(primarySwatch: Colors.red);
 
   @override
-  Widget? get home => SplashScreen();
+  Widget? get home => const SplashScreen();
 
   @override
   Bindings? get initialBinding => MarvelBindings.instance;
