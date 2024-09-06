@@ -10,7 +10,7 @@ class CharacterViewModel extends GetxController {
 
   final RxList<Character> characters = <Character>[].obs;
   final RxList<Character> relatedCharacters = <Character>[].obs;
-  final RxBool isLoadingList = false.obs;
+  final RxBool isLoading = false.obs;
   final RxBool isLoadingRelated = false.obs;
   final RxBool isEndOfList = false.obs;
   final RxString searchQuery = ''.obs;
@@ -41,9 +41,9 @@ class CharacterViewModel extends GetxController {
   }
 
   void fetchCharacters() {
-    if (isLoadingList.value || isEndOfList.value) return;
+    if (isLoading.value || isEndOfList.value) return;
 
-    isLoadingList.value = true;
+    isLoading.value = true;
     _characterRepository
         .fetchCharacters(
       nameStartsWith: searchQuery.value.isNotEmpty ? searchQuery.value : null,
@@ -62,9 +62,9 @@ class CharacterViewModel extends GetxController {
           snackPosition: SnackPosition.BOTTOM,
         );
       }
-      isLoadingList.value = false;
+      isLoading.value = false;
     }).catchError((error) {
-      isLoadingList.value = false;
+      isLoading.value = false;
       Get.snackbar(
         'Error',
         'Error fetching characters: $error',

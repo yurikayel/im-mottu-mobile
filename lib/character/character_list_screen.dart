@@ -10,7 +10,7 @@ class CharacterListScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Obx(
-              () {
+          () {
             final query = characterViewModel.searchQuery.value;
             return Center(
               child: Text(
