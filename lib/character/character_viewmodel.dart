@@ -7,12 +7,12 @@ class CharacterViewModel extends GetxController {
   final IEventRepository _eventRepository;
   final ISeriesRepository _seriesRepository;
   final IStoryRepository _storyRepository;
-  final ICreatorRepository _creatorRepository;
 
   final RxList<Character> characters = <Character>[].obs;
   final RxList<Character> relatedCharacters = <Character>[].obs;
   final RxBool isLoadingList = false.obs;
   final RxBool isLoadingRelated = false.obs;
+  final RxBool isEndOfList = false.obs;
   final RxString searchQuery = ''.obs;
   final RxInt offset = 0.obs;
   final int limit = 20;
@@ -23,7 +23,6 @@ class CharacterViewModel extends GetxController {
     this._eventRepository,
     this._seriesRepository,
     this._storyRepository,
-    this._creatorRepository,
   );
 
   @override
@@ -33,29 +32,35 @@ class CharacterViewModel extends GetxController {
   }
 
   void onSearchChanged(String query) {
+    if (searchQuery.value == query) return;
     searchQuery.value = query;
     offset.value = 0;
     characters.clear();
+    isEndOfList.value = false;
     fetchCharacters();
   }
 
   void fetchCharacters() {
-    if (isLoadingList.value) return;
+    if (isLoadingList.value || isEndOfList.value) return;
 
     isLoadingList.value = true;
     _characterRepository
         .fetchCharacters(
       nameStartsWith: searchQuery.value.isNotEmpty ? searchQuery.value : null,
       limit: limit,
-      offset: offset.value, // Use current offset
+      offset: offset.value,
     )
         .then((data) {
       if (data.data.results.isNotEmpty) {
         characters.addAll(data.data.results);
-        offset.value += limit; // Increment the offset by limit
+        offset.value += limit;
       } else {
-        // No more data, maybe stop further pagination
-        Get.snackbar('Info', 'No more characters to load');
+        isEndOfList.value = true;
+        Get.snackbar(
+          'Info',
+          'No more characters to load',
+          snackPosition: SnackPosition.BOTTOM,
+        );
       }
       isLoadingList.value = false;
     }).catchError((error) {

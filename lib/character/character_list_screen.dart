@@ -11,16 +11,27 @@ class CharacterListScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Marvel Characters'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () {
-              showSearch(
-                context: context,
-                delegate: CharacterSearchDelegate(
-                  onSearchQueryChanged: characterViewModel.onSearchChanged,
-                ),
-              );
-            },
+          Obx(
+            () => characterViewModel.searchQuery.value.isNotEmpty
+                ? IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () {
+                      // Clear search query and reload default character list
+                      characterViewModel.onSearchChanged('');
+                    },
+                  )
+                : IconButton(
+                    icon: const Icon(Icons.search),
+                    onPressed: () {
+                      showSearch(
+                        context: context,
+                        delegate: CharacterSearchDelegate(
+                          onSearchQueryChanged:
+                              characterViewModel.onSearchChanged,
+                        ),
+                      );
+                    },
+                  ),
           ),
         ],
       ),
@@ -53,8 +64,9 @@ class CharacterListScreen extends StatelessWidget {
                     itemBuilder: (context, index) {
                       final character = characterViewModel.characters[index];
                       return CharacterGridItem(
-                          character: character,
-                          characterViewModel: characterViewModel);
+                        character: character,
+                        characterViewModel: characterViewModel,
+                      );
                     },
                   ),
                 ),
@@ -117,8 +129,12 @@ class CharacterSearchDelegate extends SearchDelegate<String> {
       IconButton(
         icon: const Icon(Icons.close),
         onPressed: () {
-          query = '';
-          onSearchQueryChanged(query);
+          if (query.isEmpty) {
+            close(context, 'close'); // Dismiss search when query is empty
+          } else {
+            query = '';
+            onSearchQueryChanged(query);
+          }
         },
       ),
     ];

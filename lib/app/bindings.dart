@@ -19,9 +19,7 @@ class MarvelBindings extends Bindings {
     _initializeEventModule(dio);
     _initializeSeriesModule(dio);
     _initializeStoryModule(dio);
-    Future.delayed(const Duration(milliseconds: 1500), () {
-      _initializeCharacterModule(dio);
-    });
+    _initializeCharacterModule(dio);
   }
 
   void _initializeComicModule(Dio dio) {
@@ -104,7 +102,6 @@ class MarvelBindings extends Bindings {
         Get.find<IEventRepository>(),
         Get.find<ISeriesRepository>(),
         Get.find<IStoryRepository>(),
-        Get.find<ICreatorRepository>(),
       ),
     );
   }
