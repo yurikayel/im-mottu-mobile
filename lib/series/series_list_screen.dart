@@ -9,28 +9,43 @@ class SeriesListScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Marvel Series'),
+        title: Obx(
+          () {
+            final query = seriesViewModel.searchQuery.value;
+            return Center(
+              child: Text(
+                query.isNotEmpty
+                    ? 'Search results for "$query"'
+                    : 'Marvel Series',
+              ),
+            );
+          },
+        ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () {
-              showSearch(
-                context: context,
-                delegate: SeriesSearchDelegate(
-                  searchController: seriesViewModel.searchController,
-                  onSearchQueryChanged: seriesViewModel.onSearchQueryChanged,
-                ),
-              );
-            },
+          Obx(
+            () => seriesViewModel.searchQuery.value.isNotEmpty
+                ? IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () {
+                      seriesViewModel.onSearchChanged('');
+                    },
+                  )
+                : IconButton(
+                    icon: const Icon(Icons.search),
+                    onPressed: () {
+                      showSearch(
+                        context: context,
+                        delegate: SeriesSearchDelegate(
+                          onSearchQueryChanged: seriesViewModel.onSearchChanged,
+                        ),
+                      );
+                    },
+                  ),
           ),
         ],
       ),
-      body: Obx(() {
-        if (seriesViewModel.errorMessage.value.isNotEmpty) {
-          return Center(child: Text(seriesViewModel.errorMessage.value));
-        }
-
-        return NotificationListener<ScrollNotification>(
+      body: Obx(
+        () => NotificationListener<ScrollNotification>(
           onNotification: (scrollInfo) {
             if (!seriesViewModel.isLoading.value &&
                 scrollInfo.metrics.pixels ==
@@ -43,20 +58,26 @@ class SeriesListScreen extends StatelessWidget {
           child: Column(
             children: [
               Expanded(
-                child: GridView.builder(
-                  padding: const EdgeInsets.all(8.0),
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount:
-                        MediaQuery.of(context).size.width > 600 ? 4 : 2,
-                    crossAxisSpacing: 8.0,
-                    mainAxisSpacing: 8.0,
-                    childAspectRatio: 0.85,
+                child: Obx(
+                  () => GridView.builder(
+                    padding: const EdgeInsets.all(8.0),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount:
+                          MediaQuery.of(context).size.width > 600 ? 4 : 2,
+                      crossAxisSpacing: 8.0,
+                      mainAxisSpacing: 8.0,
+                      childAspectRatio:
+                          MediaQuery.of(context).size.width > 600 ? 0.6 : 0.8,
+                    ),
+                    itemCount: seriesViewModel.series.length,
+                    itemBuilder: (context, index) {
+                      final series = seriesViewModel.series[index];
+                      return SeriesGridItem(
+                        series: series,
+                        seriesViewModel: seriesViewModel,
+                      );
+                    },
                   ),
-                  itemCount: seriesViewModel.series.length,
-                  itemBuilder: (context, index) {
-                    final series = seriesViewModel.series[index];
-                    return SeriesGridItem(series: series);
-                  },
                 ),
               ),
               if (seriesViewModel.isLoading.value)
@@ -65,27 +86,26 @@ class SeriesListScreen extends StatelessWidget {
                     padding: EdgeInsets.all(64.0),
                     child: CircularProgressIndicator(),
                   ),
-                ),
+                )
             ],
           ),
-        );
-      }),
+        ),
+      ),
     );
   }
 }
 
 class SeriesSearchDelegate extends SearchDelegate<String> {
-  final TextEditingController searchController;
   final void Function(String query) onSearchQueryChanged;
 
   SeriesSearchDelegate({
-    required this.searchController,
     required this.onSearchQueryChanged,
   });
 
   @override
   Widget buildSuggestions(BuildContext context) {
-    final suggestions = <String>[]; // Populate with actual suggestions
+    final suggestions = <String>[];
+
     return ListView.builder(
       itemCount: suggestions.length,
       itemBuilder: (context, index) {
@@ -93,10 +113,9 @@ class SeriesSearchDelegate extends SearchDelegate<String> {
         return ListTile(
           title: Text(suggestion),
           onTap: () {
-            searchController.text = suggestion;
             query = suggestion;
             onSearchQueryChanged(query);
-            Navigator.pop(context);
+            close(context, suggestion);
           },
         );
       },
@@ -106,9 +125,8 @@ class SeriesSearchDelegate extends SearchDelegate<String> {
   @override
   Widget buildResults(BuildContext context) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      searchController.text = query;
       onSearchQueryChanged(query);
-      Navigator.pop(context);
+      close(context, query);
     });
     return Container();
   }
@@ -119,8 +137,12 @@ class SeriesSearchDelegate extends SearchDelegate<String> {
       IconButton(
         icon: const Icon(Icons.close),
         onPressed: () {
-          Navigator.pop(context);
-          searchController.clear();
+          if (query.isEmpty) {
+            close(context, 'close');
+          } else {
+            query = '';
+            onSearchQueryChanged(query);
+          }
         },
       ),
     ];
@@ -131,7 +153,7 @@ class SeriesSearchDelegate extends SearchDelegate<String> {
     return IconButton(
       icon: const Icon(Icons.arrow_back),
       onPressed: () {
-        Navigator.pop(context);
+        close(context, 'close');
       },
     );
   }
@@ -139,8 +161,13 @@ class SeriesSearchDelegate extends SearchDelegate<String> {
 
 class SeriesGridItem extends StatelessWidget {
   final Series series;
+  final SeriesViewModel seriesViewModel;
 
-  const SeriesGridItem({super.key, required this.series});
+  const SeriesGridItem({
+    super.key,
+    required this.series,
+    required this.seriesViewModel,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -149,7 +176,9 @@ class SeriesGridItem extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => SeriesDetailScreen(series: series),
+            builder: (context) => SeriesDetailScreen(
+              series: series,
+            ),
           ),
         );
       },
@@ -159,29 +188,17 @@ class SeriesGridItem extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
-              child: Padding(
-                padding: const EdgeInsets.only(top: 24.0),
-                child: ClipRRect(
-                  borderRadius:
-                      const BorderRadius.vertical(top: Radius.circular(8.0)),
-                  child: series.thumbnail != null
-                      ? Center(
-                          child: Image.network(
-                            '${series.thumbnail!.path}.${series.thumbnail!.extension}',
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return const Center(
-                                child: Icon(Icons.error),
-                              );
-                            },
-                          ),
-                        )
-                      : const Placeholder(),
+              child: ClipRRect(
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(8.0)),
+                child: Image.network(
+                  '${series.thumbnail?.path}.${series.thumbnail?.extension}',
+                  fit: BoxFit.cover,
                 ),
               ),
             ),
             Padding(
-              padding: const EdgeInsets.all(32.0),
+              padding: const EdgeInsets.all(8.0),
               child: Text(
                 series.title,
                 style: Theme.of(context).textTheme.bodyMedium,

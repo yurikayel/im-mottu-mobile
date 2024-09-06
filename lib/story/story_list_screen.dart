@@ -9,32 +9,43 @@ class StoryListScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Marvel Stories'),
+        title: Obx(
+          () {
+            final query = storyViewModel.searchQuery.value;
+            return Center(
+              child: Text(
+                query.isNotEmpty
+                    ? 'Search results for "$query"'
+                    : 'Marvel Stories',
+              ),
+            );
+          },
+        ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () {
-              showSearch(
-                context: context,
-                delegate: StorySearchDelegate(
-                  searchController: storyViewModel.searchController,
-                  onSearchQueryChanged: storyViewModel.onSearchQueryChanged,
-                ),
-              );
-            },
+          Obx(
+            () => storyViewModel.searchQuery.value.isNotEmpty
+                ? IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () {
+                      storyViewModel.onSearchChanged('');
+                    },
+                  )
+                : IconButton(
+                    icon: const Icon(Icons.search),
+                    onPressed: () {
+                      showSearch(
+                        context: context,
+                        delegate: StorySearchDelegate(
+                          onSearchQueryChanged: storyViewModel.onSearchChanged,
+                        ),
+                      );
+                    },
+                  ),
           ),
         ],
       ),
-      body: Obx(() {
-        if (storyViewModel.errorMessage.value.isNotEmpty) {
-          return Center(child: Text(storyViewModel.errorMessage.value));
-        }
-
-        if (storyViewModel.isLoading.value && storyViewModel.stories.isEmpty) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        return NotificationListener<ScrollNotification>(
+      body: Obx(
+        () => NotificationListener<ScrollNotification>(
           onNotification: (scrollInfo) {
             if (!storyViewModel.isLoading.value &&
                 scrollInfo.metrics.pixels ==
@@ -47,49 +58,54 @@ class StoryListScreen extends StatelessWidget {
           child: Column(
             children: [
               Expanded(
-                child: GridView.builder(
-                  padding: const EdgeInsets.all(8.0),
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount:
-                        MediaQuery.of(context).size.width > 600 ? 4 : 2,
-                    crossAxisSpacing: 8.0,
-                    mainAxisSpacing: 8.0,
-                    childAspectRatio:
-                        MediaQuery.of(context).size.width > 600 ? 0.6 : 0.8,
+                child: Obx(
+                  () => GridView.builder(
+                    padding: const EdgeInsets.all(8.0),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount:
+                          MediaQuery.of(context).size.width > 600 ? 4 : 2,
+                      crossAxisSpacing: 8.0,
+                      mainAxisSpacing: 8.0,
+                      childAspectRatio:
+                          MediaQuery.of(context).size.width > 600 ? 0.6 : 0.8,
+                    ),
+                    itemCount: storyViewModel.stories.length,
+                    itemBuilder: (context, index) {
+                      final story = storyViewModel.stories[index];
+                      return StoryGridItem(
+                        story: story,
+                        storyViewModel: storyViewModel,
+                      );
+                    },
                   ),
-                  itemCount: storyViewModel.stories.length,
-                  itemBuilder: (context, index) {
-                    final story = storyViewModel.stories[index];
-                    return StoryGridItem(story: story);
-                  },
                 ),
               ),
-              if (storyViewModel.isLoading.value &&
-                  storyViewModel.stories.isNotEmpty)
-                const Padding(
-                  padding: EdgeInsets.all(64.0),
-                  child: CircularProgressIndicator(),
+              if (storyViewModel.isLoading.value)
+                const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(64.0),
+                    child: CircularProgressIndicator(),
+                  ),
                 ),
             ],
           ),
-        );
-      }),
+        ),
+      ),
     );
   }
 }
 
 class StorySearchDelegate extends SearchDelegate<String> {
-  final TextEditingController searchController;
   final void Function(String query) onSearchQueryChanged;
 
   StorySearchDelegate({
-    required this.searchController,
     required this.onSearchQueryChanged,
   });
 
   @override
   Widget buildSuggestions(BuildContext context) {
-    final suggestions = <String>[]; // Populate with actual suggestions
+    final suggestions = <String>[]; // Populate with real suggestions
+
     return ListView.builder(
       itemCount: suggestions.length,
       itemBuilder: (context, index) {
@@ -97,10 +113,9 @@ class StorySearchDelegate extends SearchDelegate<String> {
         return ListTile(
           title: Text(suggestion),
           onTap: () {
-            searchController.text = suggestion;
             query = suggestion;
-            onSearchQueryChanged(query); // Pass the query to parent
-            Navigator.pop(context); // Close the search delegate after selection
+            onSearchQueryChanged(query);
+            close(context, suggestion);
           },
         );
       },
@@ -110,12 +125,10 @@ class StorySearchDelegate extends SearchDelegate<String> {
   @override
   Widget buildResults(BuildContext context) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      searchController.text = query;
-      onSearchQueryChanged(query); // Trigger search with current query
-      Navigator.pop(
-          context); // Close the search delegate after triggering the search
+      onSearchQueryChanged(query);
+      close(context, query);
     });
-    return Container(); // Placeholder, as search results are managed by the parent screen
+    return Container(); // Optionally return a placeholder widget
   }
 
   @override
@@ -124,9 +137,12 @@ class StorySearchDelegate extends SearchDelegate<String> {
       IconButton(
         icon: const Icon(Icons.close),
         onPressed: () {
-          query = '';
-          searchController.clear();
-          onSearchQueryChanged(query); // Clear search results
+          if (query.isEmpty) {
+            close(context, 'close');
+          } else {
+            query = '';
+            onSearchQueryChanged(query);
+          }
         },
       ),
     ];
@@ -145,8 +161,13 @@ class StorySearchDelegate extends SearchDelegate<String> {
 
 class StoryGridItem extends StatelessWidget {
   final Story story;
+  final StoryViewModel storyViewModel;
 
-  const StoryGridItem({super.key, required this.story});
+  const StoryGridItem({
+    super.key,
+    required this.story,
+    required this.storyViewModel,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -155,7 +176,9 @@ class StoryGridItem extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => StoryDetailScreen(story: story),
+            builder: (context) => StoryDetailScreen(
+              story: story,
+            ),
           ),
         );
       },
@@ -164,12 +187,26 @@ class StoryGridItem extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Expanded(
+              child: ClipRRect(
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(8.0)),
+                child: Image.network(
+                  '${story.thumbnail?.path}.${story.thumbnail?.extension}',
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return const Center(
+                      child: Icon(Icons.error, color: Colors.red),
+                    );
+                  },
+                ),
+              ),
+            ),
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: Text(
                 story.title,
                 style: Theme.of(context).textTheme.bodyMedium,
-                maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
             ),

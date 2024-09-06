@@ -2,14 +2,13 @@ import 'package:im_mottu_mobile/index.dart';
 
 class CreatorViewModel extends GetxController {
   final ICreatorRepository _creatorRepository;
+  final RxList<Creator> creators = <Creator>[].obs;
+  final RxBool isLoading = false.obs;
+  final RxBool isEndOfList = false.obs;
+  final RxString searchQuery = ''.obs;
+  final RxInt offset = 0.obs;
+  final int limit = 20;
 
-  // Observable variables
-  var creators = <Creator>[].obs;
-  var isLoading = false.obs;
-  var errorMessage = ''.obs;
-  final TextEditingController searchController = TextEditingController();
-
-  // Constructor
   CreatorViewModel(this._creatorRepository);
 
   @override
@@ -18,95 +17,131 @@ class CreatorViewModel extends GetxController {
     fetchCreators();
   }
 
-  /// Fetches a list of creators from the repository.
-  Future<void> fetchCreators({
-    String? name,
-    String? nameStartsWith,
-    int? limit = 20,
-    int? offset = 0,
-  }) async {
-    isLoading.value = true;
-    errorMessage.value = '';
+  void onSearchChanged(String query) {
+    if (searchQuery.value == query) return;
+    searchQuery.value = query;
+    offset.value = 0;
+    creators.clear();
+    isEndOfList.value = false;
+    fetchCreators();
+  }
 
-    try {
-      final response = await _creatorRepository.fetchCreators(
-        name: name,
-        nameStartsWith: nameStartsWith,
-        limit: limit,
-        offset: offset,
+  void fetchCreators() {
+    if (isLoading.value || isEndOfList.value) return;
+
+    isLoading.value = true;
+    _creatorRepository
+        .fetchCreators(
+      nameStartsWith: searchQuery.value.isNotEmpty ? searchQuery.value : null,
+      limit: limit,
+      offset: offset.value,
+    )
+        .then((data) {
+      if (data.data.results.isNotEmpty) {
+        creators.addAll(data.data.results);
+        offset.value += limit;
+      } else {
+        isEndOfList.value = true;
+        Get.snackbar(
+          'Info',
+          'No more creators to load',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+      }
+      isLoading.value = false;
+    }).catchError((error) {
+      isLoading.value = false;
+      Get.snackbar(
+        'Error',
+        'Error fetching creators: $error',
+        snackPosition: SnackPosition.BOTTOM,
       );
-
-      creators.value = response.data?.results ?? [];
-    } catch (e) {
-      errorMessage.value = 'Failed to load creators: ${e.toString()}';
-    } finally {
-      isLoading.value = false;
-    }
+    });
   }
 
-  /// Fetches a creator by ID.
   Future<void> fetchCreatorById(int creatorId) async {
-    isLoading.value = true;
-    errorMessage.value = '';
-
     try {
-      final response = await _creatorRepository.fetchCreatorById(creatorId);
-      creators.value = response.data?.results ?? [];
-    } catch (e) {
-      errorMessage.value = 'Failed to load creator: ${e.toString()}';
+      isLoading.value = true;
+      final data = await _creatorRepository.fetchCreatorById(creatorId);
+      creators.clear();
+      creators.addAll(data.data.results);
+    } catch (error) {
+      Get.snackbar(
+        'Error',
+        'Error fetching creator: $error',
+        snackPosition: SnackPosition.BOTTOM,
+      );
     } finally {
       isLoading.value = false;
     }
   }
 
-  /// Fetches creators associated with a comic.
   Future<void> fetchCreatorsByComic(int comicId) async {
-    isLoading.value = true;
-    errorMessage.value = '';
-
     try {
-      final response = await _creatorRepository.fetchCreatorsByComic(comicId);
-      creators.value = response.data?.results ?? [];
-    } catch (e) {
-      errorMessage.value = 'Failed to load creators for comic: ${e.toString()}';
+      isLoading.value = true;
+      final data = await _creatorRepository.fetchCreatorsByComic(comicId);
+      creators.clear();
+      creators.addAll(data.data.results);
+    } catch (error) {
+      Get.snackbar(
+        'Error',
+        'Error fetching creators by comic: $error',
+        snackPosition: SnackPosition.BOTTOM,
+      );
     } finally {
       isLoading.value = false;
     }
   }
 
-  /// Fetches creators associated with a series.
   Future<void> fetchCreatorsBySeries(int seriesId) async {
-    isLoading.value = true;
-    errorMessage.value = '';
-
     try {
-      final response = await _creatorRepository.fetchCreatorsBySeries(seriesId);
-      creators.value = response.data?.results ?? [];
-    } catch (e) {
-      errorMessage.value =
-          'Failed to load creators for series: ${e.toString()}';
+      isLoading.value = true;
+      final data = await _creatorRepository.fetchCreatorsBySeries(seriesId);
+      creators.clear();
+      creators.addAll(data.data.results);
+    } catch (error) {
+      Get.snackbar(
+        'Error',
+        'Error fetching creators by series: $error',
+        snackPosition: SnackPosition.BOTTOM,
+      );
     } finally {
       isLoading.value = false;
     }
   }
 
-  /// Fetches creators associated with an event.
   Future<void> fetchCreatorsByEvent(int eventId) async {
-    isLoading.value = true;
-    errorMessage.value = '';
-
     try {
-      final response = await _creatorRepository.fetchCreatorsByEvent(eventId);
-      creators.value = response.data?.results ?? [];
-    } catch (e) {
-      errorMessage.value = 'Failed to load creators for event: ${e.toString()}';
+      isLoading.value = true;
+      final data = await _creatorRepository.fetchCreatorsByEvent(eventId);
+      creators.clear();
+      creators.addAll(data.data.results);
+    } catch (error) {
+      Get.snackbar(
+        'Error',
+        'Error fetching creators by event: $error',
+        snackPosition: SnackPosition.BOTTOM,
+      );
     } finally {
       isLoading.value = false;
     }
   }
 
-  /// Handles changes in the search query.
-  void onSearchQueryChanged(String query) {
-    fetchCreators(nameStartsWith: query, limit: 20, offset: 0);
+  Future<void> fetchCreatorsByCharacter(int characterId) async {
+    try {
+      isLoading.value = true;
+      final data =
+          await _creatorRepository.fetchCreatorsByCharacter(characterId);
+      creators.clear();
+      creators.addAll(data.data.results);
+    } catch (error) {
+      Get.snackbar(
+        'Error',
+        'Error fetching creators by character: $error',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } finally {
+      isLoading.value = false;
+    }
   }
 }

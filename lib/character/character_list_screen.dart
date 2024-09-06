@@ -9,7 +9,18 @@ class CharacterListScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Marvel Characters'),
+        title: Obx(
+              () {
+            final query = characterViewModel.searchQuery.value;
+            return Center(
+              child: Text(
+                query.isNotEmpty
+                    ? 'Search results for "$query"'
+                    : 'Marvel Events',
+              ),
+            );
+          },
+        ),
         actions: [
           Obx(
             () => characterViewModel.searchQuery.value.isNotEmpty

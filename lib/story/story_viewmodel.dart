@@ -1,16 +1,14 @@
-import 'package:get/get.dart';
 import 'package:im_mottu_mobile/index.dart';
 
 class StoryViewModel extends GetxController {
   final IStoryRepository _storyRepository;
+  final RxList<Story> stories = <Story>[].obs;
+  final RxBool isLoading = false.obs;
+  final RxBool isEndOfList = false.obs;
+  final RxString searchQuery = ''.obs;
+  final RxInt offset = 0.obs;
+  final int limit = 20;
 
-  // Observable variables
-  var stories = <Story>[].obs;
-  var isLoading = false.obs;
-  var errorMessage = ''.obs;
-  final TextEditingController searchController = TextEditingController();
-
-  // Constructor
   StoryViewModel(this._storyRepository);
 
   @override
@@ -19,122 +17,148 @@ class StoryViewModel extends GetxController {
     fetchStories();
   }
 
-  /// Fetches a list of stories from the repository.
-  Future<void> fetchStories({
-    String? title,
-    String? titleStartsWith,
-    String? comics,
-    String? series,
-    String? creators,
-    String? events,
-    String? characters,
-    String? orderBy,
-    int? limit = 20,
-    int? offset = 0,
-  }) async {
-    isLoading.value = true;
-    errorMessage.value = '';
+  void onSearchChanged(String query) {
+    if (searchQuery.value == query) return;
+    searchQuery.value = query;
+    offset.value = 0;
+    stories.clear();
+    isEndOfList.value = false;
+    fetchStories();
+  }
 
-    try {
-      final response = await _storyRepository.fetchStories(
-        title: title,
-        titleStartsWith: titleStartsWith,
-        comics: comics,
-        series: series,
-        creators: creators,
-        events: events,
-        characters: characters,
-        orderBy: orderBy,
-        limit: limit,
-        offset: offset,
+  void fetchStories() {
+    if (isLoading.value || isEndOfList.value) return;
+
+    isLoading.value = true;
+    _storyRepository.fetchStories(
+      titleStartsWith: searchQuery.value.isNotEmpty
+          ? searchQuery.value
+          : null,
+      limit: limit,
+      offset: offset.value,
+    )
+        .then((data) {
+      if (data.data.results.isNotEmpty) {
+        stories.addAll(data.data.results);
+        offset.value += limit;
+      } else {
+        isEndOfList.value = true;
+        Get.snackbar(
+          'Info',
+          'No more stories to load',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+      }
+      isLoading.value = false;
+    }).catchError((error) {
+      isLoading.value = false;
+      Get.snackbar(
+        'Error',
+        'Error fetching stories: $error',
+        snackPosition: SnackPosition.BOTTOM,
       );
+    });
+  }
 
-      stories.value = response.data?.results ?? [];
-    } catch (e) {
-      errorMessage.value = 'Failed to load stories: ${e.toString()}';
+  Future<void> fetchStoryById(int storyId) async {
+    try {
+      isLoading.value = true;
+      final data = await _storyRepository.fetchStoryById(storyId);
+      stories.clear();
+      stories.addAll(data.data.results);
+    } catch (error) {
+      Get.snackbar(
+        'Error',
+        'Error fetching story: $error',
+        snackPosition: SnackPosition.BOTTOM,
+      );
     } finally {
       isLoading.value = false;
     }
   }
 
-  /// Fetches stories associated with a specific comic.
   Future<void> fetchStoriesByComic(int comicId) async {
-    isLoading.value = true;
-    errorMessage.value = '';
-
     try {
-      final response = await _storyRepository.fetchStoriesByComic(comicId);
-      stories.value = response.data?.results ?? [];
-    } catch (e) {
-      errorMessage.value = 'Failed to load stories: ${e.toString()}';
+      isLoading.value = true;
+      final data = await _storyRepository.fetchStoriesByComic(comicId);
+      stories.clear();
+      stories.addAll(data.data.results);
+    } catch (error) {
+      Get.snackbar(
+        'Error',
+        'Error fetching stories by comic: $error',
+        snackPosition: SnackPosition.BOTTOM,
+      );
     } finally {
       isLoading.value = false;
     }
   }
 
-  /// Fetches stories associated with a specific series.
   Future<void> fetchStoriesBySeries(int seriesId) async {
-    isLoading.value = true;
-    errorMessage.value = '';
-
     try {
-      final response = await _storyRepository.fetchStoriesBySeries(seriesId);
-      stories.value = response.data?.results ?? [];
-    } catch (e) {
-      errorMessage.value = 'Failed to load stories: ${e.toString()}';
+      isLoading.value = true;
+      final data = await _storyRepository.fetchStoriesBySeries(seriesId);
+      stories.clear();
+      stories.addAll(data.data.results);
+    } catch (error) {
+      Get.snackbar(
+        'Error',
+        'Error fetching stories by series: $error',
+        snackPosition: SnackPosition.BOTTOM,
+      );
     } finally {
       isLoading.value = false;
     }
   }
 
-  /// Fetches stories associated with a specific creator.
   Future<void> fetchStoriesByCreator(int creatorId) async {
-    isLoading.value = true;
-    errorMessage.value = '';
-
     try {
-      final response = await _storyRepository.fetchStoriesByCreator(creatorId);
-      stories.value = response.data?.results ?? [];
-    } catch (e) {
-      errorMessage.value = 'Failed to load stories: ${e.toString()}';
+      isLoading.value = true;
+      final data = await _storyRepository.fetchStoriesByCreator(creatorId);
+      stories.clear();
+      stories.addAll(data.data.results);
+    } catch (error) {
+      Get.snackbar(
+        'Error',
+        'Error fetching stories by creator: $error',
+        snackPosition: SnackPosition.BOTTOM,
+      );
     } finally {
       isLoading.value = false;
     }
   }
 
-  /// Fetches stories associated with a specific event.
   Future<void> fetchStoriesByEvent(int eventId) async {
-    isLoading.value = true;
-    errorMessage.value = '';
-
     try {
-      final response = await _storyRepository.fetchStoriesByEvent(eventId);
-      stories.value = response.data?.results ?? [];
-    } catch (e) {
-      errorMessage.value = 'Failed to load stories: ${e.toString()}';
+      isLoading.value = true;
+      final data = await _storyRepository.fetchStoriesByEvent(eventId);
+      stories.clear();
+      stories.addAll(data.data.results);
+    } catch (error) {
+      Get.snackbar(
+        'Error',
+        'Error fetching stories by event: $error',
+        snackPosition: SnackPosition.BOTTOM,
+      );
     } finally {
       isLoading.value = false;
     }
   }
 
-  /// Fetches stories associated with a specific character.
   Future<void> fetchStoriesByCharacter(int characterId) async {
-    isLoading.value = true;
-    errorMessage.value = '';
-
     try {
-      final response =
-          await _storyRepository.fetchStoriesByCharacter(characterId);
-      stories.value = response.data?.results ?? [];
-    } catch (e) {
-      errorMessage.value = 'Failed to load stories: ${e.toString()}';
+      isLoading.value = true;
+      final data = await _storyRepository.fetchStoriesByCharacter(characterId);
+      stories.clear();
+      stories.addAll(data.data.results);
+    } catch (error) {
+      Get.snackbar(
+        'Error',
+        'Error fetching stories by character: $error',
+        snackPosition: SnackPosition.BOTTOM,
+      );
     } finally {
       isLoading.value = false;
     }
-  }
-
-  /// Handles changes in the search query.
-  void onSearchQueryChanged(String query) {
-    fetchStories(titleStartsWith: query, limit: 20, offset: 0);
   }
 }

@@ -9,28 +9,44 @@ class ComicListScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Marvel Comics'),
+        title: Obx(
+          () {
+            final query = comicViewModel.searchQuery.value;
+            return Center(
+              child: Text(
+                query.isNotEmpty
+                    ? 'Search results for "$query"'
+                    : 'Marvel Events',
+              ),
+            );
+          },
+        ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () {
-              showSearch(
-                context: context,
-                delegate: ComicSearchDelegate(
-                  searchController: comicViewModel.searchController,
-                  onSearchQueryChanged: comicViewModel.onSearchQueryChanged,
-                ),
-              );
-            },
+          Obx(
+            () => comicViewModel.searchQuery.value.isNotEmpty
+                ? IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () {
+                      // Clear search query and reload default comic list
+                      comicViewModel.onSearchChanged('');
+                    },
+                  )
+                : IconButton(
+                    icon: const Icon(Icons.search),
+                    onPressed: () {
+                      showSearch(
+                        context: context,
+                        delegate: ComicSearchDelegate(
+                          onSearchQueryChanged: comicViewModel.onSearchChanged,
+                        ),
+                      );
+                    },
+                  ),
           ),
         ],
       ),
-      body: Obx(() {
-        if (comicViewModel.errorMessage.value.isNotEmpty) {
-          return Center(child: Text(comicViewModel.errorMessage.value));
-        }
-
-        return NotificationListener<ScrollNotification>(
+      body: Obx(
+        () => NotificationListener<ScrollNotification>(
           onNotification: (scrollInfo) {
             if (!comicViewModel.isLoading.value &&
                 scrollInfo.metrics.pixels ==
@@ -43,48 +59,55 @@ class ComicListScreen extends StatelessWidget {
           child: Column(
             children: [
               Expanded(
-                child: GridView.builder(
-                  padding: const EdgeInsets.all(8.0),
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount:
-                        MediaQuery.of(context).size.width > 600 ? 4 : 2,
-                    crossAxisSpacing: 8.0,
-                    mainAxisSpacing: 8.0,
-                    childAspectRatio:
-                        MediaQuery.of(context).size.width > 600 ? 0.6 : 0.8,
+                child: Obx(
+                  () => GridView.builder(
+                    padding: const EdgeInsets.all(8.0),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount:
+                          MediaQuery.of(context).size.width > 600 ? 4 : 2,
+                      crossAxisSpacing: 8.0,
+                      mainAxisSpacing: 8.0,
+                      childAspectRatio:
+                          MediaQuery.of(context).size.width > 600 ? 0.6 : 0.8,
+                    ),
+                    itemCount: comicViewModel.comics.length,
+                    itemBuilder: (context, index) {
+                      final comic = comicViewModel.comics[index];
+                      return ComicGridItem(
+                        comic: comic,
+                        comicViewModel: comicViewModel,
+                      );
+                    },
                   ),
-                  itemCount: comicViewModel.comics.length,
-                  itemBuilder: (context, index) {
-                    final comic = comicViewModel.comics[index];
-                    return ComicGridItem(comic: comic);
-                  },
                 ),
               ),
               if (comicViewModel.isLoading.value)
-                const Padding(
-                  padding: EdgeInsets.all(64.0),
-                  child: Center(child: CircularProgressIndicator()),
-                ),
+                const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(64.0),
+                    child: CircularProgressIndicator(),
+                  ),
+                )
             ],
           ),
-        );
-      }),
+        ),
+      ),
     );
   }
 }
 
 class ComicSearchDelegate extends SearchDelegate<String> {
-  final TextEditingController searchController;
   final void Function(String query) onSearchQueryChanged;
 
   ComicSearchDelegate({
-    required this.searchController,
     required this.onSearchQueryChanged,
   });
 
   @override
   Widget buildSuggestions(BuildContext context) {
-    final suggestions = <String>[]; // Populate with actual suggestions
+    // You might want to provide actual suggestions here
+    final suggestions = <String>[];
+
     return ListView.builder(
       itemCount: suggestions.length,
       itemBuilder: (context, index) {
@@ -92,10 +115,9 @@ class ComicSearchDelegate extends SearchDelegate<String> {
         return ListTile(
           title: Text(suggestion),
           onTap: () {
-            searchController.text = suggestion;
             query = suggestion;
-            onSearchQueryChanged(query); // Pass the query to parent
-            Navigator.pop(context); // Close the search delegate after selection
+            onSearchQueryChanged(query);
+            close(context, suggestion);
           },
         );
       },
@@ -105,12 +127,10 @@ class ComicSearchDelegate extends SearchDelegate<String> {
   @override
   Widget buildResults(BuildContext context) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      searchController.text = query;
-      onSearchQueryChanged(query); // Trigger search with current query
-      Navigator.pop(
-          context); // Close the search delegate after triggering the search
+      onSearchQueryChanged(query);
+      close(context, query);
     });
-    return Container(); // Placeholder, as search results are managed by the parent screen
+    return Container();
   }
 
   @override
@@ -119,8 +139,12 @@ class ComicSearchDelegate extends SearchDelegate<String> {
       IconButton(
         icon: const Icon(Icons.close),
         onPressed: () {
-          Navigator.pop(context);
-          searchController.clear();
+          if (query.isEmpty) {
+            close(context, 'close'); // Dismiss search when query is empty
+          } else {
+            query = '';
+            onSearchQueryChanged(query);
+          }
         },
       ),
     ];
@@ -131,7 +155,7 @@ class ComicSearchDelegate extends SearchDelegate<String> {
     return IconButton(
       icon: const Icon(Icons.arrow_back),
       onPressed: () {
-        Navigator.pop(context);
+        close(context, 'close');
       },
     );
   }
@@ -139,8 +163,10 @@ class ComicSearchDelegate extends SearchDelegate<String> {
 
 class ComicGridItem extends StatelessWidget {
   final Comic comic;
+  final ComicViewModel comicViewModel;
 
-  const ComicGridItem({super.key, required this.comic});
+  const ComicGridItem(
+      {super.key, required this.comic, required this.comicViewModel});
 
   @override
   Widget build(BuildContext context) {
@@ -164,19 +190,10 @@ class ComicGridItem extends StatelessWidget {
               child: ClipRRect(
                 borderRadius:
                     const BorderRadius.vertical(top: Radius.circular(8.0)),
-                child: comic.thumbnail != null
-                    ? Center(
-                        child: Image.network(
-                          '${comic.thumbnail!.path}.${comic.thumbnail!.extension}',
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return const Center(
-                              child: Icon(Icons.error),
-                            );
-                          },
-                        ),
-                      )
-                    : const Placeholder(), // Show a placeholder if thumbnail is null
+                child: Image.network(
+                  '${comic.thumbnail?.path}.${comic.thumbnail?.extension}',
+                  fit: BoxFit.cover,
+                ),
               ),
             ),
             Padding(

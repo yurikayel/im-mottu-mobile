@@ -1,17 +1,14 @@
 import 'package:im_mottu_mobile/index.dart';
 
-/// ViewModel for managing comic-related data and UI state.
 class ComicViewModel extends GetxController {
   final IComicRepository _comicRepository;
-
-  // Observable variables
-  var comics = <Comic>[].obs;
-  var isLoading = false.obs;
-  var errorMessage = ''.obs;
-  final TextEditingController searchController = TextEditingController();
+  final RxList<Comic> comics = <Comic>[].obs;
+  final RxBool isLoading = false.obs;
+  final RxBool isEndOfList = false.obs;
+  final RxString searchQuery = ''.obs;
   final RxInt offset = 0.obs;
+  final int limit = 20;
 
-  // Constructor
   ComicViewModel(this._comicRepository);
 
   @override
@@ -20,116 +17,113 @@ class ComicViewModel extends GetxController {
     fetchComics();
   }
 
-  /// Fetches a list of comics from the repository.
-  ///
-  /// [titleStartsWith] - Optionally filter comics whose title starts with this string.
-  /// [limit] - Number of comics to fetch (default is 20).
-  /// [offset] - Pagination offset (default is 0).
-  Future<void> fetchComics({
-    String? titleStartsWith,
-    int limit = 20, // Set default limit
-  }) async {
+  void onSearchChanged(String query) {
+    if (searchQuery.value == query) return;
+    searchQuery.value = query;
+    offset.value = 0;
+    comics.clear();
+    isEndOfList.value = false;
+    fetchComics();
+  }
+
+  void fetchComics() {
+    if (isLoading.value || isEndOfList.value) return;
+
     isLoading.value = true;
-    errorMessage.value = '';
-
-    try {
-      final response = await _comicRepository.fetchComics(
-        titleStartsWith: titleStartsWith,
-        limit: limit,
-        offset: offset.value,
-      );
-
-      if (response.data.results.isNotEmpty ?? false) {
-        comics.addAll(response.data.results ?? []);
-        // Increment offset only if data is fetched successfully
+    _comicRepository
+        .fetchComics(
+      titleStartsWith: searchQuery.value.isNotEmpty ? searchQuery.value : null,
+      limit: limit,
+      offset: offset.value,
+    )
+        .then((data) {
+      if (data.data.results.isNotEmpty) {
+        comics.addAll(data.data.results);
         offset.value += limit;
       } else {
-        // No more comics to load
-        Get.snackbar('Info', 'No more comics to load');
+        isEndOfList.value = true;
+        Get.snackbar(
+          'Info',
+          'No more comics to load',
+          snackPosition: SnackPosition.BOTTOM,
+        );
       }
-    } catch (e) {
-      errorMessage.value = 'Failed to load comics: ${e.toString()}';
-    } finally {
       isLoading.value = false;
-    }
+    }).catchError((error) {
+      isLoading.value = false;
+      Get.snackbar(
+        'Error',
+        'Error fetching comics: $error',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    });
   }
 
-  /// Fetches a specific comic by its ID.
-  ///
-  /// [comicId] - The ID of the comic to fetch.
   Future<void> fetchComicById(int comicId) async {
-    isLoading.value = true;
-    errorMessage.value = '';
-
     try {
-      final response = await _comicRepository.fetchComicById(comicId);
-      comics.value = response.data?.results ?? [];
-    } catch (e) {
-      errorMessage.value = 'Failed to load comic: ${e.toString()}';
+      isLoading.value = true;
+      final data = await _comicRepository.fetchComicById(comicId);
+      comics.clear();
+      comics.addAll(data.data.results);
+    } catch (error) {
+      Get.snackbar(
+        'Error',
+        'Error fetching comic: $error',
+        snackPosition: SnackPosition.BOTTOM,
+      );
     } finally {
       isLoading.value = false;
     }
   }
 
-  /// Fetches comics associated with a specific character.
-  ///
-  /// [characterId] - The ID of the character.
   Future<void> fetchComicsByCharacter(int characterId) async {
-    isLoading.value = true;
-    errorMessage.value = '';
-
     try {
-      final response =
-          await _comicRepository.fetchComicsByCharacter(characterId);
-      comics.value = response.data?.results ?? [];
-    } catch (e) {
-      errorMessage.value =
-          'Failed to load comics for character: ${e.toString()}';
+      isLoading.value = true;
+      final data = await _comicRepository.fetchComicsByCharacter(characterId);
+      comics.clear();
+      comics.addAll(data.data.results);
+    } catch (error) {
+      Get.snackbar(
+        'Error',
+        'Error fetching comics by character: $error',
+        snackPosition: SnackPosition.BOTTOM,
+      );
     } finally {
       isLoading.value = false;
     }
   }
 
-  /// Fetches comics associated with a specific series.
-  ///
-  /// [seriesId] - The ID of the series.
   Future<void> fetchComicsBySeries(int seriesId) async {
-    isLoading.value = true;
-    errorMessage.value = '';
-
     try {
-      final response = await _comicRepository.fetchComicsBySeries(seriesId);
-      comics.value = response.data?.results ?? [];
-    } catch (e) {
-      errorMessage.value = 'Failed to load comics for series: ${e.toString()}';
+      isLoading.value = true;
+      final data = await _comicRepository.fetchComicsBySeries(seriesId);
+      comics.clear();
+      comics.addAll(data.data.results);
+    } catch (error) {
+      Get.snackbar(
+        'Error',
+        'Error fetching comics by series: $error',
+        snackPosition: SnackPosition.BOTTOM,
+      );
     } finally {
       isLoading.value = false;
     }
   }
 
-  /// Fetches comics associated with a specific event.
-  ///
-  /// [eventId] - The ID of the event.
   Future<void> fetchComicsByEvent(int eventId) async {
-    isLoading.value = true;
-    errorMessage.value = '';
-
     try {
-      final response = await _comicRepository.fetchComicsByEvent(eventId);
-      comics.value = response.data?.results ?? [];
-    } catch (e) {
-      errorMessage.value = 'Failed to load comics for event: ${e.toString()}';
+      isLoading.value = true;
+      final data = await _comicRepository.fetchComicsByEvent(eventId);
+      comics.clear();
+      comics.addAll(data.data.results);
+    } catch (error) {
+      Get.snackbar(
+        'Error',
+        'Error fetching comics by event: $error',
+        snackPosition: SnackPosition.BOTTOM,
+      );
     } finally {
       isLoading.value = false;
     }
-  }
-
-  /// Handles changes in the search query.
-  ///
-  /// [query] - The new search query to filter comics.
-  void onSearchQueryChanged(String query) {
-    comics.value = List.empty();
-    offset.value = 0;
-    fetchComics(titleStartsWith: query, limit: 20);
   }
 }

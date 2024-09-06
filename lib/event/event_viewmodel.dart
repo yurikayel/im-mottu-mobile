@@ -2,14 +2,13 @@ import 'package:im_mottu_mobile/index.dart';
 
 class EventViewModel extends GetxController {
   final IEventRepository _eventRepository;
+  final RxList<Event> events = <Event>[].obs;
+  final RxBool isLoading = false.obs;
+  final RxBool isEndOfList = false.obs;
+  final RxString searchQuery = ''.obs;
+  final RxInt offset = 0.obs;
+  final int limit = 20;
 
-  // Observable variables
-  var events = <Event>[].obs;
-  var isLoading = false.obs;
-  var errorMessage = ''.obs;
-  final TextEditingController searchController = TextEditingController();
-
-  // Constructor
   EventViewModel(this._eventRepository);
 
   @override
@@ -18,124 +17,113 @@ class EventViewModel extends GetxController {
     fetchEvents();
   }
 
-  /// Fetches a list of events from the repository.
-  Future<void> fetchEvents({
-    String? name,
-    String? nameStartsWith,
-    String? comics,
-    String? series,
-    String? creators,
-    String? stories,
-    String? orderBy,
-    int? limit = 20,
-    int? offset = 0,
-  }) async {
-    isLoading.value = true;
-    errorMessage.value = '';
+  void onSearchChanged(String query) {
+    if (searchQuery.value == query) return;
+    searchQuery.value = query;
+    offset.value = 0;
+    events.clear();
+    isEndOfList.value = false;
+    fetchEvents();
+  }
 
-    try {
-      final response = await _eventRepository.fetchEvents(
-        name: name,
-        nameStartsWith: nameStartsWith,
-        comics: comics,
-        series: series,
-        creators: creators,
-        stories: stories,
-        orderBy: orderBy,
-        limit: limit,
-        offset: offset,
+  void fetchEvents() {
+    if (isLoading.value || isEndOfList.value) return;
+
+    isLoading.value = true;
+    _eventRepository
+        .fetchEvents(
+      nameStartsWith: searchQuery.value.isNotEmpty ? searchQuery.value : null,
+      limit: limit,
+      offset: offset.value,
+    )
+        .then((data) {
+      if (data.data.results.isNotEmpty) {
+        events.addAll(data.data.results);
+        offset.value += limit;
+      } else {
+        isEndOfList.value = true;
+        Get.snackbar(
+          'Info',
+          'No more events to load',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+      }
+      isLoading.value = false;
+    }).catchError((error) {
+      isLoading.value = false;
+      Get.snackbar(
+        'Error',
+        'Error fetching events: $error',
+        snackPosition: SnackPosition.BOTTOM,
       );
-
-      events.value =
-          response.data.results.map((item) => item).toList();
-    } catch (e) {
-      errorMessage.value = 'Failed to load events: ${e.toString()}';
-    } finally {
-      isLoading.value = false;
-    }
+    });
   }
 
-  /// Fetches event details by ID.
   Future<void> fetchEventById(int eventId) async {
-    isLoading.value = true;
-    errorMessage.value = '';
-
     try {
-      final response = await _eventRepository.fetchEventById(eventId);
-      events.value =
-          response.data.results.map((item) => item).toList();
-    } catch (e) {
-      errorMessage.value = 'Failed to load event: ${e.toString()}';
+      isLoading.value = true;
+      final data = await _eventRepository.fetchEventById(eventId);
+      events.clear();
+      events.addAll(data.data.results);
+    } catch (error) {
+      Get.snackbar(
+        'Error',
+        'Error fetching event: $error',
+        snackPosition: SnackPosition.BOTTOM,
+      );
     } finally {
       isLoading.value = false;
     }
   }
 
-  /// Fetches events associated with a specific comic.
   Future<void> fetchEventsByComic(int comicId) async {
-    isLoading.value = true;
-    errorMessage.value = '';
-
     try {
-      final response = await _eventRepository.fetchEventsByComic(comicId);
-      events.value =
-          response.data.results.map((item) => item).toList();
-    } catch (e) {
-      errorMessage.value = 'Failed to load events by comic: ${e.toString()}';
+      isLoading.value = true;
+      final data = await _eventRepository.fetchEventsByComic(comicId);
+      events.clear();
+      events.addAll(data.data.results);
+    } catch (error) {
+      Get.snackbar(
+        'Error',
+        'Error fetching events by comic: $error',
+        snackPosition: SnackPosition.BOTTOM,
+      );
     } finally {
       isLoading.value = false;
     }
   }
 
-  /// Fetches events associated with a specific creator.
-  Future<void> fetchEventsByCreator(int creatorId) async {
-    isLoading.value = true;
-    errorMessage.value = '';
-
-    try {
-      final response = await _eventRepository.fetchEventsByCreator(creatorId);
-      events.value =
-          response.data.results.map((item) => item).toList();
-    } catch (e) {
-      errorMessage.value = 'Failed to load events by creator: ${e.toString()}';
-    } finally {
-      isLoading.value = false;
-    }
-  }
-
-  /// Fetches events associated with a specific series.
   Future<void> fetchEventsBySeries(int seriesId) async {
-    isLoading.value = true;
-    errorMessage.value = '';
-
     try {
-      final response = await _eventRepository.fetchEventsBySeries(seriesId);
-      events.value = response.data.results.map((item) => item).toList();
-    } catch (e) {
-      errorMessage.value = 'Failed to load events by series: ${e.toString()}';
+      isLoading.value = true;
+      final data = await _eventRepository.fetchEventsBySeries(seriesId);
+      events.clear();
+      events.addAll(data.data.results);
+    } catch (error) {
+      Get.snackbar(
+        'Error',
+        'Error fetching events by series: $error',
+        snackPosition: SnackPosition.BOTTOM,
+      );
     } finally {
       isLoading.value = false;
     }
   }
 
-  /// Fetches events associated with a specific story.
-  Future<void> fetchEventsByStory(int storyId) async {
-    isLoading.value = true;
-    errorMessage.value = '';
-
+  Future<void> fetchEventsByCharacter(int characterId) async {
     try {
-      final response = await _eventRepository.fetchEventsByStory(storyId);
-      events.value =
-          response.data.results.map((item) => item).toList();
-    } catch (e) {
-      errorMessage.value = 'Failed to load events by story: ${e.toString()}';
+      isLoading.value = true;
+      final data = await _eventRepository.fetchEventsByCharacter(characterId);
+      events.clear();
+      events.addAll(data.data.results);
+    } catch (error) {
+      Get.snackbar(
+        'Error',
+        'Error fetching events by character: $error',
+        snackPosition: SnackPosition.BOTTOM,
+      );
     } finally {
       isLoading.value = false;
     }
-  }
-
-  /// Handles changes in the search query.
-  void onSearchQueryChanged(String query) {
-    fetchEvents(nameStartsWith: query, limit: 20, offset: 0);
   }
 }

@@ -9,28 +9,44 @@ class CreatorListScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Marvel Creators'),
+        title: Obx(
+              () {
+            final query = creatorViewModel.searchQuery.value;
+            return Center(
+              child: Text(
+                query.isNotEmpty
+                    ? 'Search results for "$query"'
+                    : 'Marvel Events',
+              ),
+            );
+          },
+        ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () {
-              showSearch(
-                context: context,
-                delegate: CreatorSearchDelegate(
-                  searchController: creatorViewModel.searchController,
-                  onSearchQueryChanged: creatorViewModel.onSearchQueryChanged,
-                ),
-              );
-            },
+          Obx(
+                () => creatorViewModel.searchQuery.value.isNotEmpty
+                ? IconButton(
+              icon: const Icon(Icons.close),
+              onPressed: () {
+                creatorViewModel.onSearchChanged('');
+              },
+            )
+                : IconButton(
+              icon: const Icon(Icons.search),
+              onPressed: () {
+                showSearch(
+                  context: context,
+                  delegate: CreatorSearchDelegate(
+                    onSearchQueryChanged:
+                    creatorViewModel.onSearchChanged,
+                  ),
+                );
+              },
+            ),
           ),
         ],
       ),
-      body: Obx(() {
-        if (creatorViewModel.errorMessage.value.isNotEmpty) {
-          return Center(child: Text(creatorViewModel.errorMessage.value));
-        }
-
-        return NotificationListener<ScrollNotification>(
+      body: Obx(
+            () => NotificationListener<ScrollNotification>(
           onNotification: (scrollInfo) {
             if (!creatorViewModel.isLoading.value &&
                 scrollInfo.metrics.pixels ==
@@ -43,48 +59,54 @@ class CreatorListScreen extends StatelessWidget {
           child: Column(
             children: [
               Expanded(
-                child: GridView.builder(
-                  padding: const EdgeInsets.all(8.0),
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount:
-                        MediaQuery.of(context).size.width > 600 ? 4 : 2,
-                    crossAxisSpacing: 8.0,
-                    mainAxisSpacing: 8.0,
-                    childAspectRatio:
-                        MediaQuery.of(context).size.width > 600 ? 0.6 : 0.8,
+                child: Obx(
+                      () => GridView.builder(
+                    padding: const EdgeInsets.all(8.0),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount:
+                      MediaQuery.of(context).size.width > 600 ? 4 : 2,
+                      crossAxisSpacing: 8.0,
+                      mainAxisSpacing: 8.0,
+                      childAspectRatio:
+                      MediaQuery.of(context).size.width > 600 ? 0.6 : 0.8,
+                    ),
+                    itemCount: creatorViewModel.creators.length,
+                    itemBuilder: (context, index) {
+                      final creator = creatorViewModel.creators[index];
+                      return CreatorGridItem(
+                        creator: creator,
+                        creatorViewModel: creatorViewModel,
+                      );
+                    },
                   ),
-                  itemCount: creatorViewModel.creators.length,
-                  itemBuilder: (context, index) {
-                    final creator = creatorViewModel.creators[index];
-                    return CreatorGridItem(creator: creator);
-                  },
                 ),
               ),
               if (creatorViewModel.isLoading.value)
-                const Padding(
-                  padding: EdgeInsets.all(64.0),
-                  child: Center(child: CircularProgressIndicator()),
+                const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(64.0),
+                    child: CircularProgressIndicator(),
+                  ),
                 )
             ],
           ),
-        );
-      }),
+        ),
+      ),
     );
   }
 }
 
 class CreatorSearchDelegate extends SearchDelegate<String> {
-  final TextEditingController searchController;
   final void Function(String query) onSearchQueryChanged;
 
   CreatorSearchDelegate({
-    required this.searchController,
     required this.onSearchQueryChanged,
   });
 
   @override
   Widget buildSuggestions(BuildContext context) {
-    final suggestions = <String>[]; // Populate with actual suggestions
+    final suggestions = <String>[];
+
     return ListView.builder(
       itemCount: suggestions.length,
       itemBuilder: (context, index) {
@@ -92,10 +114,9 @@ class CreatorSearchDelegate extends SearchDelegate<String> {
         return ListTile(
           title: Text(suggestion),
           onTap: () {
-            searchController.text = suggestion;
             query = suggestion;
-            onSearchQueryChanged(query); // Pass the query to parent
-            Navigator.pop(context); // Close the search delegate after selection
+            onSearchQueryChanged(query);
+            close(context, suggestion);
           },
         );
       },
@@ -105,12 +126,10 @@ class CreatorSearchDelegate extends SearchDelegate<String> {
   @override
   Widget buildResults(BuildContext context) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      searchController.text = query;
-      onSearchQueryChanged(query); // Trigger search with current query
-      Navigator.pop(
-          context); // Close the search delegate after triggering the search
+      onSearchQueryChanged(query);
+      close(context, query);
     });
-    return Container(); // Placeholder, as search results are managed by the parent screen
+    return Container();
   }
 
   @override
@@ -119,8 +138,12 @@ class CreatorSearchDelegate extends SearchDelegate<String> {
       IconButton(
         icon: const Icon(Icons.close),
         onPressed: () {
-          Navigator.pop(context);
-          searchController.clear();
+          if (query.isEmpty) {
+            close(context, 'close');
+          } else {
+            query = '';
+            onSearchQueryChanged(query);
+          }
         },
       ),
     ];
@@ -131,7 +154,7 @@ class CreatorSearchDelegate extends SearchDelegate<String> {
     return IconButton(
       icon: const Icon(Icons.arrow_back),
       onPressed: () {
-        Navigator.pop(context);
+        close(context, 'close');
       },
     );
   }
@@ -139,8 +162,13 @@ class CreatorSearchDelegate extends SearchDelegate<String> {
 
 class CreatorGridItem extends StatelessWidget {
   final Creator creator;
+  final CreatorViewModel creatorViewModel;
 
-  const CreatorGridItem({super.key, required this.creator});
+  const CreatorGridItem({
+    super.key,
+    required this.creator,
+    required this.creatorViewModel,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -163,18 +191,11 @@ class CreatorGridItem extends StatelessWidget {
             Expanded(
               child: ClipRRect(
                 borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(8.0)),
-                child: creator.thumbnail != null
-                    ? Image.network(
-                        '${creator.thumbnail!.path}.${creator.thumbnail!.extension}',
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return const Center(
-                            child: Icon(Icons.error),
-                          );
-                        },
-                      )
-                    : const Placeholder(), // Show a placeholder if thumbnail is null
+                const BorderRadius.vertical(top: Radius.circular(8.0)),
+                child: Image.network(
+                  '${creator.thumbnail?.path}.${creator.thumbnail?.extension}',
+                  fit: BoxFit.cover,
+                ),
               ),
             ),
             Padding(

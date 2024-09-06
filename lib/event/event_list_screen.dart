@@ -9,28 +9,43 @@ class EventListScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Marvel Events'),
+        title: Obx(
+          () {
+            final query = eventViewModel.searchQuery.value;
+            return Center(
+              child: Text(
+                query.isNotEmpty
+                    ? 'Search results for "$query"'
+                    : 'Marvel Events',
+              ),
+            );
+          },
+        ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () {
-              showSearch(
-                context: context,
-                delegate: EventSearchDelegate(
-                  searchController: eventViewModel.searchController,
-                  onSearchQueryChanged: eventViewModel.onSearchQueryChanged,
-                ),
-              );
-            },
+          Obx(
+            () => eventViewModel.searchQuery.value.isNotEmpty
+                ? IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () {
+                      eventViewModel.onSearchChanged('');
+                    },
+                  )
+                : IconButton(
+                    icon: const Icon(Icons.search),
+                    onPressed: () {
+                      showSearch(
+                        context: context,
+                        delegate: EventSearchDelegate(
+                          onSearchQueryChanged: eventViewModel.onSearchChanged,
+                        ),
+                      );
+                    },
+                  ),
           ),
         ],
       ),
-      body: Obx(() {
-        if (eventViewModel.errorMessage.value.isNotEmpty) {
-          return Center(child: Text(eventViewModel.errorMessage.value));
-        }
-
-        return NotificationListener<ScrollNotification>(
+      body: Obx(
+        () => NotificationListener<ScrollNotification>(
           onNotification: (scrollInfo) {
             if (!eventViewModel.isLoading.value &&
                 scrollInfo.metrics.pixels ==
@@ -43,20 +58,26 @@ class EventListScreen extends StatelessWidget {
           child: Column(
             children: [
               Expanded(
-                child: GridView.builder(
-                  padding: const EdgeInsets.all(8.0),
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount:
-                        MediaQuery.of(context).size.width > 600 ? 4 : 2,
-                    crossAxisSpacing: 8.0,
-                    mainAxisSpacing: 8.0,
-                    childAspectRatio: 1.0, // Make cards square
+                child: Obx(
+                  () => GridView.builder(
+                    padding: const EdgeInsets.all(8.0),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount:
+                          MediaQuery.of(context).size.width > 600 ? 4 : 2,
+                      crossAxisSpacing: 8.0,
+                      mainAxisSpacing: 8.0,
+                      childAspectRatio:
+                          MediaQuery.of(context).size.width > 600 ? 0.6 : 0.8,
+                    ),
+                    itemCount: eventViewModel.events.length,
+                    itemBuilder: (context, index) {
+                      final event = eventViewModel.events[index];
+                      return EventGridItem(
+                        event: event,
+                        eventViewModel: eventViewModel,
+                      );
+                    },
                   ),
-                  itemCount: eventViewModel.events.length,
-                  itemBuilder: (context, index) {
-                    final event = eventViewModel.events[index];
-                    return EventGridItem(event: event);
-                  },
                 ),
               ),
               if (eventViewModel.isLoading.value)
@@ -65,27 +86,26 @@ class EventListScreen extends StatelessWidget {
                     padding: EdgeInsets.all(64.0),
                     child: CircularProgressIndicator(),
                   ),
-                ),
+                )
             ],
           ),
-        );
-      }),
+        ),
+      ),
     );
   }
 }
 
 class EventSearchDelegate extends SearchDelegate<String> {
-  final TextEditingController searchController;
   final void Function(String query) onSearchQueryChanged;
 
   EventSearchDelegate({
-    required this.searchController,
     required this.onSearchQueryChanged,
   });
 
   @override
   Widget buildSuggestions(BuildContext context) {
-    final suggestions = <String>[]; // Populate with actual suggestions
+    final suggestions = <String>[];
+
     return ListView.builder(
       itemCount: suggestions.length,
       itemBuilder: (context, index) {
@@ -93,10 +113,9 @@ class EventSearchDelegate extends SearchDelegate<String> {
         return ListTile(
           title: Text(suggestion),
           onTap: () {
-            searchController.text = suggestion;
             query = suggestion;
-            onSearchQueryChanged(query); // Pass the query to parent
-            Navigator.pop(context); // Close the search delegate after selection
+            onSearchQueryChanged(query);
+            close(context, suggestion);
           },
         );
       },
@@ -106,12 +125,10 @@ class EventSearchDelegate extends SearchDelegate<String> {
   @override
   Widget buildResults(BuildContext context) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      searchController.text = query;
-      onSearchQueryChanged(query); // Trigger search with current query
-      Navigator.pop(
-          context); // Close the search delegate after triggering the search
+      onSearchQueryChanged(query);
+      close(context, query);
     });
-    return Container(); // Placeholder, as search results are managed by the parent screen
+    return Container();
   }
 
   @override
@@ -120,8 +137,12 @@ class EventSearchDelegate extends SearchDelegate<String> {
       IconButton(
         icon: const Icon(Icons.close),
         onPressed: () {
-          Navigator.pop(context);
-          searchController.clear();
+          if (query.isEmpty) {
+            close(context, 'close');
+          } else {
+            query = '';
+            onSearchQueryChanged(query);
+          }
         },
       ),
     ];
@@ -132,7 +153,7 @@ class EventSearchDelegate extends SearchDelegate<String> {
     return IconButton(
       icon: const Icon(Icons.arrow_back),
       onPressed: () {
-        Navigator.pop(context);
+        close(context, 'close');
       },
     );
   }
@@ -140,8 +161,13 @@ class EventSearchDelegate extends SearchDelegate<String> {
 
 class EventGridItem extends StatelessWidget {
   final Event event;
+  final EventViewModel eventViewModel;
 
-  const EventGridItem({super.key, required this.event});
+  const EventGridItem({
+    super.key,
+    required this.event,
+    required this.eventViewModel,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -150,7 +176,9 @@ class EventGridItem extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => EventDetailScreen(event: event),
+            builder: (context) => EventDetailScreen(
+              event: event,
+            ),
           ),
         );
       },
@@ -160,29 +188,17 @@ class EventGridItem extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
-              child: Padding(
-                padding: const EdgeInsets.only(top: 24.0),
-                child: ClipRRect(
-                  borderRadius:
-                      const BorderRadius.vertical(top: Radius.circular(8.0)),
-                  child: event.thumbnail != null
-                      ? Center(
-                          child: Image.network(
-                            '${event.thumbnail?.path}.${event.thumbnail?.extension}',
-                            fit: BoxFit.fitHeight,
-                            errorBuilder: (context, error, stackTrace) {
-                              return const Center(
-                                child: Icon(Icons.error),
-                              );
-                            },
-                          ),
-                        )
-                      : const Placeholder(), // Show a placeholder if thumbnail is null
+              child: ClipRRect(
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(8.0)),
+                child: Image.network(
+                  '${event.thumbnail?.path}.${event.thumbnail?.extension}',
+                  fit: BoxFit.cover,
                 ),
               ),
             ),
             Padding(
-              padding: const EdgeInsets.only(left: 32.0, top: 6.0, bottom: 6.0),
+              padding: const EdgeInsets.all(8.0),
               child: Text(
                 event.title,
                 style: Theme.of(context).textTheme.bodyMedium,
