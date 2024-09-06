@@ -10,9 +10,6 @@ class CacheInterceptor extends Interceptor {
       RequestOptions options, RequestInterceptorHandler handler) async {
     final filteredUri = _filterUri(options.uri);
     final cacheKey = filteredUri.toString();
-    kDebugMode
-        ? print('CacheInterceptor - Checking cache for key: $cacheKey')
-        : null;
 
     final cachedResponse = await _getCachedResponse(cacheKey);
     if (cachedResponse != null) {
@@ -33,9 +30,6 @@ class CacheInterceptor extends Interceptor {
   void onResponse(Response response, ResponseInterceptorHandler handler) async {
     final filteredUri = _filterUri(response.requestOptions.uri);
     final cacheKey = filteredUri.toString();
-    kDebugMode
-        ? print('CacheInterceptor - Caching response for key: $cacheKey')
-        : null;
 
     await _saveResponseToCache(cacheKey, response);
     handler.next(response);
@@ -60,9 +54,6 @@ class CacheInterceptor extends Interceptor {
     final cachedData = prefs.getString(cacheKey);
 
     if (cachedData != null) {
-      kDebugMode
-          ? print('CacheInterceptor - Found cached data for key: $cacheKey')
-          : null;
       final Map<String, dynamic> jsonResponse = json.decode(cachedData);
       final cacheItem = _CacheItem.fromJson(jsonResponse);
 

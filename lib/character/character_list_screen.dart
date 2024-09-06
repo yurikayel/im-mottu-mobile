@@ -49,7 +49,7 @@ class CharacterListScreen extends StatelessWidget {
       body: Obx(
         () => NotificationListener<ScrollNotification>(
           onNotification: (scrollInfo) {
-            if (!characterViewModel.isLoadingList.value &&
+            if (!characterViewModel.isLoading.value &&
                 scrollInfo.metrics.pixels ==
                     scrollInfo.metrics.maxScrollExtent) {
               characterViewModel.fetchCharacters();
@@ -82,7 +82,7 @@ class CharacterListScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              if (characterViewModel.isLoadingList.value)
+              if (characterViewModel.isLoading.value)
                 const Center(
                   child: Padding(
                     padding: EdgeInsets.all(64.0),
