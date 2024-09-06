@@ -59,20 +59,12 @@ class StoryListScreen extends StatelessWidget {
             children: [
               Expanded(
                 child: Obx(
-                  () => GridView.builder(
+                  () => ListView.builder(
                     padding: const EdgeInsets.all(8.0),
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount:
-                          MediaQuery.of(context).size.width > 600 ? 4 : 2,
-                      crossAxisSpacing: 8.0,
-                      mainAxisSpacing: 8.0,
-                      childAspectRatio:
-                          MediaQuery.of(context).size.width > 600 ? 0.6 : 0.8,
-                    ),
                     itemCount: storyViewModel.stories.length,
                     itemBuilder: (context, index) {
                       final story = storyViewModel.stories[index];
-                      return StoryGridItem(
+                      return StoryListItem(
                         story: story,
                         storyViewModel: storyViewModel,
                       );
@@ -104,7 +96,8 @@ class StorySearchDelegate extends SearchDelegate<String> {
 
   @override
   Widget buildSuggestions(BuildContext context) {
-    final suggestions = <String>[]; // Populate with real suggestions
+    final suggestions =
+        <String>[]; // Populate with real suggestions if applicable
 
     return ListView.builder(
       itemCount: suggestions.length,
@@ -159,11 +152,11 @@ class StorySearchDelegate extends SearchDelegate<String> {
   }
 }
 
-class StoryGridItem extends StatelessWidget {
+class StoryListItem extends StatelessWidget {
   final Story story;
   final StoryViewModel storyViewModel;
 
-  const StoryGridItem({
+  const StoryListItem({
     super.key,
     required this.story,
     required this.storyViewModel,
@@ -171,7 +164,15 @@ class StoryGridItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return ListTile(
+      title: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Text(
+          story.title,
+          style: Theme.of(context).textTheme.headlineSmall,
+          overflow: TextOverflow.clip,
+        ),
+      ),
       onTap: () {
         Navigator.push(
           context,
@@ -182,37 +183,6 @@ class StoryGridItem extends StatelessWidget {
           ),
         );
       },
-      child: Card(
-        elevation: 4.0,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: ClipRRect(
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(8.0)),
-                child: Image.network(
-                  '${story.thumbnail?.path}.${story.thumbnail?.extension}',
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return const Center(
-                      child: Icon(Icons.error, color: Colors.red),
-                    );
-                  },
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(
-                story.title,
-                style: Theme.of(context).textTheme.bodyMedium,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
