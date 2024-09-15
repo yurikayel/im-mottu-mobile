@@ -72,49 +72,37 @@ class _HomeScreenState extends State<HomeScreen>
                         context,
                         'Character',
                         Icons.person,
-                        CharacterListScreen(
-                          characterViewModel: Get.find<CharacterViewModel>(),
-                        ),
+                        AppRoutes.characterList,
                       ),
                       _buildCategoryButton(
                         context,
                         'Comic',
                         Icons.book,
-                        ComicListScreen(
-                          comicViewModel: Get.find<ComicViewModel>(),
-                        ),
+                        AppRoutes.comicList,
                       ),
                       _buildCategoryButton(
                         context,
                         'Creator',
                         Icons.create,
-                        CreatorListScreen(
-                          creatorViewModel: Get.find<CreatorViewModel>(),
-                        ),
+                        AppRoutes.creatorList,
                       ),
                       _buildCategoryButton(
                         context,
                         'Event',
                         Icons.event,
-                        EventListScreen(
-                          eventViewModel: Get.find<EventViewModel>(),
-                        ),
+                        AppRoutes.eventList,
                       ),
                       _buildCategoryButton(
                         context,
                         'Series',
                         Icons.tv,
-                        SeriesListScreen(
-                          seriesViewModel: Get.find<SeriesViewModel>(),
-                        ),
+                        AppRoutes.seriesList,
                       ),
                       _buildCategoryButton(
                         context,
                         'Story',
                         Icons.library_books,
-                        StoryListScreen(
-                          storyViewModel: Get.find<StoryViewModel>(),
-                        ),
+                        AppRoutes.storyList,
                       ),
                     ],
                   );
@@ -131,14 +119,11 @@ class _HomeScreenState extends State<HomeScreen>
     BuildContext context,
     String title,
     IconData icon,
-    Widget destinationScreen,
+    String routeName,
   ) {
     return ElevatedButton(
       onPressed: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => destinationScreen),
-        );
+        Get.toNamed(routeName); // Use GetX for navigation
       },
       style: ElevatedButton.styleFrom(
         padding: const EdgeInsets.all(16.0),
