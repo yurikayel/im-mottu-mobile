@@ -18,11 +18,6 @@ class CacheInterceptor extends Interceptor {
           : null;
       return handler.resolve(cachedResponse);
     }
-
-    kDebugMode
-        ? print(
-            'CacheInterceptor - No cache found for key: $cacheKey, proceeding with request')
-        : null;
     handler.next(options);
   }
 
@@ -65,10 +60,6 @@ class CacheInterceptor extends Interceptor {
         headers: Headers.fromMap(cacheItem.headers),
       );
     }
-    kDebugMode
-        ? print('CacheInterceptor - No cached data for key: $cacheKey')
-        : null;
-    return null;
   }
 
   /// Saves the HTTP response to the cache using SharedPreferences.
