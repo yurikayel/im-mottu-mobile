@@ -36,77 +36,80 @@ class _HomeScreenState extends State<HomeScreen>
 
   @override
   Widget build(BuildContext context) {
-    return FadeTransition(
-      opacity: _animation,
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Marvel API Explorer'),
-          titleTextStyle: const TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 22,
-            color: Colors.black,
+    return Container(
+      color: Colors.black,
+      child: FadeTransition(
+        opacity: _animation,
+        child: Scaffold(
+          appBar: AppBar(
+            title: const Text('Marvel API Explorer'),
+            titleTextStyle: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 22,
+              color: Colors.black,
+            ),
+            centerTitle: true,
+            backgroundColor: Colors.yellow,
           ),
-          centerTitle: true,
-          backgroundColor: Colors.yellow,
-        ),
-        body: Container(
-          color: Colors.black,
-          child: Center(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final crossAxisCount = constraints.maxWidth > 1200
-                      ? 4
-                      : constraints.maxWidth > 800
-                          ? 3
-                          : 2;
+          body: Container(
+            color: Colors.black,
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final crossAxisCount = constraints.maxWidth > 1200
+                        ? 4
+                        : constraints.maxWidth > 800
+                            ? 3
+                            : 2;
 
-                  return GridView.count(
-                    crossAxisCount: crossAxisCount,
-                    crossAxisSpacing: 16.0,
-                    mainAxisSpacing: 16.0,
-                    shrinkWrap: true,
-                    children: [
-                      _buildCategoryButton(
-                        context,
-                        'Character',
-                        Icons.person,
-                        AppRoutes.characterList,
-                      ),
-                      _buildCategoryButton(
-                        context,
-                        'Comic',
-                        Icons.book,
-                        AppRoutes.comicList,
-                      ),
-                      _buildCategoryButton(
-                        context,
-                        'Creator',
-                        Icons.create,
-                        AppRoutes.creatorList,
-                      ),
-                      _buildCategoryButton(
-                        context,
-                        'Event',
-                        Icons.event,
-                        AppRoutes.eventList,
-                      ),
-                      _buildCategoryButton(
-                        context,
-                        'Series',
-                        Icons.tv,
-                        AppRoutes.seriesList,
-                      ),
-                      _buildCategoryButton(
-                        context,
-                        'Story',
-                        Icons.library_books,
-                        AppRoutes.storyList,
-                      ),
-                    ],
-                  );
-                },
+                    return GridView.count(
+                      crossAxisCount: crossAxisCount,
+                      crossAxisSpacing: 16.0,
+                      mainAxisSpacing: 16.0,
+                      shrinkWrap: true,
+                      children: [
+                        _buildCategoryButton(
+                          context,
+                          'Character',
+                          Icons.person,
+                          AppRoutes.characterList,
+                        ),
+                        _buildCategoryButton(
+                          context,
+                          'Comic',
+                          Icons.book,
+                          AppRoutes.comicList,
+                        ),
+                        _buildCategoryButton(
+                          context,
+                          'Creator',
+                          Icons.create,
+                          AppRoutes.creatorList,
+                        ),
+                        _buildCategoryButton(
+                          context,
+                          'Event',
+                          Icons.event,
+                          AppRoutes.eventList,
+                        ),
+                        _buildCategoryButton(
+                          context,
+                          'Series',
+                          Icons.tv,
+                          AppRoutes.seriesList,
+                        ),
+                        _buildCategoryButton(
+                          context,
+                          'Story',
+                          Icons.library_books,
+                          AppRoutes.storyList,
+                        ),
+                      ],
+                    );
+                  },
+                ),
               ),
             ),
           ),
