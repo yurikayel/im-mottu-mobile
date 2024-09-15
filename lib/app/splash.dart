@@ -9,8 +9,8 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _animation;
+  late final AnimationController _controller;
+  late final Animation<double> _animation;
 
   @override
   void initState() {
@@ -18,38 +18,18 @@ class _SplashScreenState extends State<SplashScreen>
     _controller = AnimationController(
       duration: const Duration(seconds: 1),
       vsync: this,
-    );
+    )..forward();
+
     _animation = CurvedAnimation(
       parent: _controller,
       curve: Curves.easeInOut,
     );
 
-    _controller.forward();
+    Future.delayed(const Duration(seconds: 1), _navigateToHome);
+  }
 
-    Future.delayed(const Duration(seconds: 1), () {
-      _controller.reverse().then((value) {
-        Navigator.of(context).pushReplacement(
-          PageRouteBuilder(
-            pageBuilder: (context, animation, secondaryAnimation) =>
-                const HomeScreen(),
-            transitionsBuilder:
-                (context, animation, secondaryAnimation, child) {
-              var begin = 0.0;
-              var end = 1.0;
-              var curve = Curves.easeInOut;
-
-              var tween =
-                  Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
-
-              return FadeTransition(
-                opacity: animation.drive(tween),
-                child: child,
-              );
-            },
-          ),
-        );
-      });
-    });
+  void _navigateToHome() {
+    Get.offNamed(AppRoutes.home);
   }
 
   @override
