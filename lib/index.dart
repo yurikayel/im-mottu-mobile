@@ -29,6 +29,9 @@ export 'dart:async';
 /// Offers cryptographic functionalities, including various hashing algorithms.
 export 'package:crypto/crypto.dart';
 
+/// File, socket, HTTP, and other I/O support for non-web applications.
+export 'dart:io';
+
 
 // FLUTTER
 // ==========
@@ -40,13 +43,16 @@ export 'package:flutter/foundation.dart';
 /// Provides Material Design components and theming for Flutter applications.
 export 'package:flutter/material.dart';
 
+/// Platform services exposed to Flutter apps.
+export 'package:flutter/services.dart';
+
 
 // THIRD-PARTY PACKAGES
 // ==========
 // External libraries that enhance the functionality of the application.
 
 /// A package for state management and routing solutions with GetX.
-export 'package:get/get.dart';
+export 'package:get/get.dart' hide HeaderValue;
 
 /// Provides caching for HTTP requests when using the Dio HTTP client.
 export 'package:dio_cache_interceptor/dio_cache_interceptor.dart';
@@ -74,8 +80,11 @@ export 'package:shared_preferences/shared_preferences.dart';
 /// Handles core app setup and initialization.
 export 'app/app.dart';
 
-/// Contains data models and repositories used across the app.
+/// Contains data handling utilities used across the app.
 export 'data/data.dart';
+
+/// Contains common widgets used across the app.
+export 'widget/widget.dart';
 
 /// Includes data and functionality related to characters.
 export 'character/character.dart';

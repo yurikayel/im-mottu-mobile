@@ -1,0 +1,1 @@
+export 'marvel_image.dart';

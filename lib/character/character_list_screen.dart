@@ -1,9 +1,25 @@
 import 'package:im_mottu_mobile/index.dart';
 
+/// A screen displaying a list of characters with search functionality.
+///
+/// The `CharacterListScreen` provides a grid view of characters and allows users to search
+/// for specific characters. It handles loading more characters as the user scrolls and
+/// displays a search bar for filtering characters based on the search query.
+///
+/// Example usage:
+/// ```dart
+/// CharacterListScreen(
+///   characterViewModel: myCharacterViewModel,
+/// )
+/// ```
 class CharacterListScreen extends StatelessWidget {
-  final CharacterViewModel characterViewModel;
-
+  /// Creates a `CharacterListScreen` widget.
+  ///
+  /// * [characterViewModel]: The view model that manages the characters list and search functionality.
   const CharacterListScreen({super.key, required this.characterViewModel});
+
+  /// The view model responsible for managing character data and search functionality.
+  final CharacterViewModel characterViewModel;
 
   @override
   Widget build(BuildContext context) {
@@ -16,7 +32,7 @@ class CharacterListScreen extends StatelessWidget {
               child: Text(
                 query.isNotEmpty
                     ? 'Search results for "$query"'
-                    : 'Marvel Events',
+                    : 'Marvel Characters',
               ),
             );
           },
@@ -97,16 +113,36 @@ class CharacterListScreen extends StatelessWidget {
   }
 }
 
+/// A search delegate for searching characters.
+///
+/// The `CharacterSearchDelegate` provides a search interface for filtering characters based on the search query.
+/// It handles suggestions, results, and clearing the search query.
+///
+/// Example usage:
+/// ```dart
+/// showSearch(
+///   context: context,
+///   delegate: CharacterSearchDelegate(
+///     onSearchQueryChanged: (query) {
+///       // Handle search query change
+///     },
+///   ),
+/// );
+/// ```
 class CharacterSearchDelegate extends SearchDelegate<String> {
-  final void Function(String query) onSearchQueryChanged;
-
+  /// Creates a `CharacterSearchDelegate`.
+  ///
+  /// * [onSearchQueryChanged]: Callback function to handle changes in the search query.
   CharacterSearchDelegate({
     required this.onSearchQueryChanged,
   });
 
+  /// Callback function to handle changes in the search query.
+  final void Function(String query) onSearchQueryChanged;
+
   @override
   Widget buildSuggestions(BuildContext context) {
-    // You might want to provide actual suggestions here
+    // Provide actual suggestions if needed
     final suggestions = <String>[];
 
     return ListView.builder(
@@ -162,12 +198,40 @@ class CharacterSearchDelegate extends SearchDelegate<String> {
   }
 }
 
+/// A grid item widget that displays a character's information.
+///
+/// The `CharacterGridItem` displays a character's image and name in a grid format.
+/// Tapping on the item navigates to the `CharacterDetailScreen` for more details.
+///
+/// The image of the character is loaded using [MarvelImage], which handles caching
+/// and display.
+///
+/// * [character]: The character to be displayed in the grid item.
+/// * [characterViewModel]: The view model used for navigating to the detail screen.
+///
+/// Example usage:
+/// ```dart
+/// CharacterGridItem(
+///   character: character,
+///   characterViewModel: characterViewModel,
+/// )
+/// ```
 class CharacterGridItem extends StatelessWidget {
-  final Character character;
-  final CharacterViewModel characterViewModel;
+  /// Creates a `CharacterGridItem`.
+  ///
+  /// * [character]: The character to be displayed in the grid item.
+  /// * [characterViewModel]: The view model for navigating to the detail screen.
+  const CharacterGridItem({
+    super.key,
+    required this.character,
+    required this.characterViewModel,
+  });
 
-  const CharacterGridItem(
-      {super.key, required this.character, required this.characterViewModel});
+  /// The character to be displayed in the grid item.
+  final Character character;
+
+  /// The view model used for navigating to the detail screen.
+  final CharacterViewModel characterViewModel;
 
   @override
   Widget build(BuildContext context) {
@@ -192,9 +256,8 @@ class CharacterGridItem extends StatelessWidget {
               child: ClipRRect(
                 borderRadius:
                     const BorderRadius.vertical(top: Radius.circular(8.0)),
-                child: Image.network(
+                child: MarvelImage(
                   '${character.thumbnail.path}.${character.thumbnail.extension}',
-                  fit: BoxFit.cover,
                 ),
               ),
             ),
