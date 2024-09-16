@@ -107,5 +107,8 @@ class MarvelImage extends StatelessWidget {
   /// Returns the widget for displaying the image.
   ///
   /// Wraps the image in a [SizedBox] to ensure it takes up the full width of its container.
-  Widget _image(Image image) => SizedBox.expand(child: image);
+  Widget _image(Image image) => SizedBox(
+        width: double.infinity,
+        child: image,
+      );
 }

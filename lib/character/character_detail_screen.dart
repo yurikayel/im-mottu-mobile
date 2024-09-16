@@ -26,9 +26,13 @@ class CharacterDetailScreen extends StatefulWidget {
   });
 
   /// The [Character] whose details are displayed on this screen.
+  ///
+  /// This [Character] instance provides information such as the character's name, description, and thumbnail image.
   final Character character;
 
   /// The view model that provides data for this screen, including related characters.
+  ///
+  /// This [CharacterViewModel] instance is responsible for managing and providing data about related characters.
   final CharacterViewModel characterViewModel;
 
   @override
@@ -52,71 +56,71 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
         screenWidth > 800; // Breakpoint for tablets and desktops
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.character.name),
-      ),
-      body: Padding(
-        padding: EdgeInsets.all(isLargeScreen ? 32.0 : 16.0),
-        child: ListView(
-          children: [
-            _buildCharacterImage(thumbnailUrl),
-            const SizedBox(height: 16),
-            _buildCharacterName(context, isLargeScreen),
-            const SizedBox(height: 8),
-            _buildCharacterDescription(context, isLargeScreen),
-            const SizedBox(height: 16),
-            _buildRelatedCharacters(context),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// Builds the character's image section.
-  ///
-  /// Displays the character's thumbnail. Uses [FutureBuilder] to handle loading, error, and data states.
-  Widget _buildCharacterImage(String thumbnailUrl) => FutureBuilder<Image>(
-        future: ImageCacheManager.getImage(thumbnailUrl),
-        builder: (context, snapshot) =>
-            snapshot.connectionState == ConnectionState.waiting
-                ? _buildLoadingIndicator()
-                : snapshot.hasError
-                    ? _buildErrorIcon()
-                    : snapshot.hasData
-                        ? snapshot.data!
-                        : _buildErrorIcon(),
-      );
-
-  /// Builds the loading indicator widget.
-  ///
-  /// This widget is shown while the image is being fetched.
-  Widget _buildLoadingIndicator() {
-    return const Center(child: CircularProgressIndicator());
-  }
-
-  /// Builds the error icon widget.
-  ///
-  /// This widget is shown if there is an error loading the image.
-  Widget _buildErrorIcon() {
-    return const Center(child: Icon(Icons.error));
-  }
-
-  /// Builds the character's name section.
-  ///
-  /// Displays the character's name with responsive font size based on screen width.
-  Widget _buildCharacterName(BuildContext context, bool isLargeScreen) {
-    return Text(
-      widget.character.name,
-      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-            fontSize: isLargeScreen ? 36.0 : 24.0,
-            fontWeight: FontWeight.bold,
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            expandedHeight: 500.0, // Height of the app bar when expanded
+            flexibleSpace: FlexibleSpaceBar(
+              background: MarvelImage(
+                thumbnailUrl,
+                fit: BoxFit.cover,
+              ),
+              title: Center(
+                child: Text(
+                  widget.character.name,
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                    fontSize: isLargeScreen ? 36.0 : 24.0,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white, // Main text color
+                    shadows: [
+                      Shadow(
+                        color: Colors.black.withOpacity(0.7),
+                        offset: Offset(1, 1),
+                        blurRadius: 6,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              titlePadding: const EdgeInsets.only(bottom: 12),
+              centerTitle: true,
+              expandedTitleScale: 2,
+            ),
+            pinned: true,
+            floating: false,
+            stretch: true,
+            stretchTriggerOffset: 150.0,
           ),
+          SliverList(
+            delegate: SliverChildListDelegate(
+              [
+                Padding(
+                  padding: EdgeInsets.all(isLargeScreen ? 32.0 : 16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildCharacterDescription(context, isLargeScreen),
+                      const SizedBox(height: 16),
+                      _buildRelatedCharacters(context),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
   /// Builds the character's description section.
   ///
   /// Displays the character's description or a placeholder text if no description is available.
+  ///
+  /// * [context]: The build context used to retrieve theme data.
+  /// * [isLargeScreen]: A boolean value indicating if the screen width is large (tablet or desktop).
+  ///
+  /// Returns a [Text] widget displaying the character's description.
   Widget _buildCharacterDescription(BuildContext context, bool isLargeScreen) {
     return Text(
       widget.character.description.isNotEmpty
@@ -132,6 +136,11 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
   ///
   /// Displays related characters in a grid format. The grid adjusts the number of columns
   /// based on the screen width.
+  ///
+  /// * [context]: The build context used to retrieve theme data and screen width.
+  ///
+  /// Returns a [Column] widget containing a [Text] widget for the section title and a [GridView.builder]
+  /// widget for the related characters.
   Widget _buildRelatedCharacters(BuildContext context) {
     return Obx(() {
       final relatedCharacters = widget.characterViewModel.relatedCharacters;
@@ -149,6 +158,7 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
           : screenWidth > 500
               ? 4
               : 2;
+      final childAspectRatio = screenWidth > 800 ? 1 / 1.2 : 1 / 1.7;
 
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -168,41 +178,51 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
               crossAxisCount: crossAxisCount,
               crossAxisSpacing: 16.0,
               mainAxisSpacing: 16.0,
-              childAspectRatio: 1 / 2, // Adjust as needed
+              childAspectRatio: childAspectRatio,
             ),
             itemCount: relatedCharacters.length,
             itemBuilder: (context, index) {
               final relatedCharacter = relatedCharacters[index];
+
               return GridTile(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Expanded(
-                      child: FutureBuilder<Image>(
-                        future: ImageCacheManager.getImage(
-                          '${relatedCharacter.thumbnail.path}.${relatedCharacter.thumbnail.extension}',
-                        ),
-                        builder: (context, snapshot) {
-                          return snapshot.connectionState ==
-                                  ConnectionState.waiting
-                              ? _buildLoadingIndicator()
-                              : snapshot.hasError
-                                  ? _buildErrorIcon()
-                                  : snapshot.hasData
-                                      ? snapshot.data!
-                                      : _buildErrorIcon();
-                        },
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      relatedCharacter.name,
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            fontSize: 14.0,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(64.0),
+                  child: Stack(
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Expanded(
+                            child: MarvelImage(
+                              '${relatedCharacter.thumbnail.path}.${relatedCharacter.thumbnail.extension}',
+                            ),
                           ),
-                    ),
-                  ],
+                        ],
+                      ),
+                      Positioned(
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        child: Container(
+                          color: Colors.black.withOpacity(
+                              0.8), // Semi-transparent black background
+                          padding: const EdgeInsets.symmetric(vertical: 8.0),
+                          child: Text(
+                            relatedCharacter.name,
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(
+                                  color: Colors
+                                      .white, // Text color to contrast with the black background
+                                  fontSize: 14.0,
+                                ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               );
             },

@@ -60,6 +60,7 @@ class CacheInterceptor extends Interceptor {
         headers: Headers.fromMap(cacheItem.headers),
       );
     }
+    return null;
   }
 
   /// Saves the HTTP response to the cache using SharedPreferences.
