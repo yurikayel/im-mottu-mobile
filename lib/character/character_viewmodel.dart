@@ -1,6 +1,10 @@
 import 'package:dio/dio.dart';
 import 'package:im_mottu_mobile/index.dart';
 
+/// A ViewModel for managing character-related data and operations.
+///
+/// This ViewModel handles fetching characters, searching for characters,
+/// and fetching related characters based on various criteria.
 class CharacterViewModel extends GetxController {
   final ICharacterRepository _characterRepository;
   final IComicRepository _comicRepository;
@@ -8,15 +12,37 @@ class CharacterViewModel extends GetxController {
   final ISeriesRepository _seriesRepository;
   final IStoryRepository _storyRepository;
 
+  /// A list of characters matching the search query or current filter.
   final RxList<Character> characters = <Character>[].obs;
+
+  /// A list of related characters fetched from various sources.
   final RxList<Character> relatedCharacters = <Character>[].obs;
+
+  /// Indicates whether data is being loaded.
   final RxBool isLoading = false.obs;
+
+  /// Indicates whether related characters are being loaded.
   final RxBool isLoadingRelated = false.obs;
+
+  /// Indicates whether the end of the list has been reached.
   final RxBool isEndOfList = false.obs;
+
+  /// The current search query for filtering characters.
   final RxString searchQuery = ''.obs;
+
+  /// The current offset for pagination.
   final RxInt offset = 0.obs;
+
+  /// The number of items to fetch per page.
   final int limit = 20;
 
+  /// Creates an instance of [CharacterViewModel].
+  ///
+  /// [characterRepository] - The repository for character-related operations.
+  /// [comicRepository] - The repository for comic-related operations.
+  /// [eventRepository] - The repository for event-related operations.
+  /// [seriesRepository] - The repository for series-related operations.
+  /// [storyRepository] - The repository for story-related operations.
   CharacterViewModel(
     this._characterRepository,
     this._comicRepository,
@@ -31,6 +57,10 @@ class CharacterViewModel extends GetxController {
     fetchCharacters();
   }
 
+  /// Handles changes in the search query.
+  ///
+  /// [query] - The new search query.
+  /// If the query is different from the current query, it resets the list and fetches new characters.
   void onSearchChanged(String query) {
     if (searchQuery.value == query) return;
     searchQuery.value = query;
@@ -40,6 +70,10 @@ class CharacterViewModel extends GetxController {
     fetchCharacters();
   }
 
+  /// Fetches characters from the repository based on the current search query and pagination.
+  ///
+  /// Updates the [characters] list and [offset] based on the fetched data.
+  /// Displays a snackbar message if no more characters are available or if an error occurs.
   void fetchCharacters() {
     if (isLoading.value || isEndOfList.value) return;
 
@@ -73,6 +107,11 @@ class CharacterViewModel extends GetxController {
     });
   }
 
+  /// Fetches a character by its ID and related characters.
+  ///
+  /// [characterId] - The ID of the character to fetch.
+  /// Clears the [characters] list, fetches the character data, and then fetches related characters.
+  /// Displays a snackbar message if an error occurs.
   Future<void> fetchCharacterById(int characterId) async {
     if (isLoadingRelated.value) return;
 
@@ -93,52 +132,35 @@ class CharacterViewModel extends GetxController {
     }
   }
 
+  /// Fetches related characters based on various sources.
+  ///
+  /// [characterId] - The ID of the character for which related characters are to be fetched.
+  /// Fetches characters from comics, series, events, and stories related to the given character,
+  /// and updates the [relatedCharacters] list.
+  /// Displays a snackbar message if an error occurs.
   Future<void> fetchRelatedCharacters(int characterId) async {
-    try {
-      isLoadingRelated.value = true;
+    if (isLoadingRelated.value) return;
 
-      // Clear previous related characters to start fresh
+    isLoadingRelated.value = true;
+    try {
       relatedCharacters.clear();
 
-      // Fetch characters from various sources and update the list incrementally
-      await _fetchAndUpdateRelatedCharacters(
-        () async => (await _comicRepository.fetchComicsByCharacter(characterId))
-            .data
-            .results,
-        _fetchCharactersInComic,
-        characterId,
-      );
+      final fetchFunctions = [
+        () async => (await _comicRepository.fetchComicsByCharacter(characterId)).data.results,
+        () async => (await _seriesRepository.fetchSeriesByCharacter(characterId)).data.results,
+        () async => (await _eventRepository.fetchEventsByCharacter(characterId)).data.results,
+        () async => (await _storyRepository.fetchStoriesByCharacter(characterId)).data.results,
+      ];
 
-      await _fetchAndUpdateRelatedCharacters(
-        () async =>
-            (await _seriesRepository.fetchSeriesByCharacter(characterId))
-                .data
-                .results,
-        _fetchCharactersInSeries,
-        characterId,
-      );
+      for (var fetchFunction in fetchFunctions) {
+        await _fetchAndUpdateRelatedCharacters(fetchFunction, characterId);
+      }
 
-      await _fetchAndUpdateRelatedCharacters(
-        () async => (await _eventRepository.fetchEventsByCharacter(characterId))
-            .data
-            .results,
-        _fetchCharactersInEvent,
-        characterId,
-      );
-
-      await _fetchAndUpdateRelatedCharacters(
-        () async =>
-            (await _storyRepository.fetchStoriesByCharacter(characterId))
-                .data
-                .results,
-        _fetchCharactersInStory,
-        characterId,
-      );
-
-      // Sort the related characters alphabetically
       _sortRelatedCharactersAlphabetically();
     } catch (error) {
-      print('Error in fetchRelatedCharacters: $error'); // Log the error
+      if (kDebugMode) {
+        print('Error in fetchRelatedCharacters: $error');
+      }
       Get.snackbar(
         'Error',
         'Error fetching related characters: $error',
@@ -149,82 +171,126 @@ class CharacterViewModel extends GetxController {
     }
   }
 
+  /// Fetches characters from a specific source and updates the [relatedCharacters] list.
+  ///
+  /// [fetchFunction] - A function that returns a list of items from which to fetch related characters.
+  /// [currentCharacterId] - The ID of the current character to exclude from the results.
+  /// Updates the [relatedCharacters] list with characters fetched from the provided source.
   Future<void> _fetchAndUpdateRelatedCharacters(
     Future<List<dynamic>> Function() fetchFunction,
-    Future<List<Character>> Function(int) processFunction,
     int currentCharacterId,
   ) async {
     try {
       final items = await fetchFunction();
       for (var item in items) {
-        final charactersFromItem = await processFunction(item.id);
-
+        final charactersFromItem = await _fetchCharactersById(item.id);
         for (var character in charactersFromItem) {
-          // Skip if it's the current character
           if (character.id == currentCharacterId) continue;
-
-          // If character is not already in the list, add it
           if (!relatedCharacters.any((c) => c.id == character.id)) {
             relatedCharacters.add(character);
           }
         }
       }
 
-      // Sort related characters alphabetically after each fetch
       _sortRelatedCharactersAlphabetically();
     } catch (error) {
-      print(
-          'Error in _fetchAndUpdateRelatedCharacters: $error'); // Log the error
+      if (kDebugMode) {
+        print('Error in _fetchAndUpdateRelatedCharacters: $error');
+      }
       Get.snackbar(
         'Error',
-        'Error fetching related characters from endpoint: $error',
+        'Failed to fetch related characters: ${_parseError(error)}',
         snackPosition: SnackPosition.BOTTOM,
       );
     }
   }
 
+// Error parser utility method
+  String _parseError(dynamic error) {
+    if (error is DioException) {
+      if (error.response != null) {
+        return 'Status code: ${error.response?.statusCode} - ${error.response?.statusMessage}';
+      }
+      return 'DioException - ${error.message}';
+    }
+    return 'Unknown error - ${error.toString()}';
+  }
+
+  /// Fetches characters by ID with retry logic.
+  ///
+  /// [id] - The ID of the comic, series, event, or story.
+  /// Returns a list of characters associated with the provided ID.
+  Future<List<Character>> _fetchCharactersById(int id) async {
+    return await _fetchWithRetry(
+      () async => (await _characterRepository.fetchCharactersInComic(id)).data.results,
+      3,
+    );
+  }
+
+  /// Sorts the [relatedCharacters] list alphabetically by character name.
   void _sortRelatedCharactersAlphabetically() {
     relatedCharacters.sort((a, b) => a.name.compareTo(b.name));
   }
 
+  /// Fetches a list of characters from a specific comic ID with retry logic.
+  ///
+  /// [comicId] - The ID of the comic to fetch characters from.
   Future<List<Character>> _fetchCharactersInComic(int comicId) async {
     return await _fetchWithRetry(
-      () async => (await _characterRepository.fetchCharactersInComic(comicId))
-          .data
-          .results,
+      () async => (await _characterRepository.fetchCharactersInComic(comicId)).data.results,
       3,
     );
   }
 
+  /// Fetches a list of characters from a specific series ID with retry logic.
+  ///
+  /// [seriesId] - The ID of the series to fetch characters from.
   Future<List<Character>> _fetchCharactersInSeries(int seriesId) async {
     return await _fetchWithRetry(
-      () async => (await _characterRepository.fetchCharactersInSeries(seriesId))
-          .data
-          .results,
+      () async => (await _characterRepository.fetchCharactersInSeries(seriesId)).data.results,
       3,
     );
   }
 
+  /// Fetches a list of characters from a specific event ID with retry logic.
+  ///
+  /// [eventId] - The ID of the event to fetch characters from.
   Future<List<Character>> _fetchCharactersInEvent(int eventId) async {
     return await _fetchWithRetry(
-      () async => (await _characterRepository.fetchCharactersInEvent(eventId))
-          .data
-          .results,
+      () async => (await _characterRepository.fetchCharactersInEvent(eventId)).data.results,
       3,
     );
   }
 
+  /// Fetches a list of characters from a specific story ID with retry logic.
+  ///
+  /// [storyId] - The ID of the story to fetch characters from.
   Future<List<Character>> _fetchCharactersInStory(int storyId) async {
     return await _fetchWithRetry(
-      () async => (await _characterRepository.fetchCharactersInStory(storyId))
-          .data
-          .results,
+      () async => (await _characterRepository.fetchCharactersInStory(storyId)).data.results,
       3,
     );
   }
 
+  /// Fetches a list of characters from a specific creator ID with retry logic.
+  ///
+  /// [creatorId] - The ID of the creator to fetch characters from.
+  Future<List<Character>> _fetchCharactersByCreator(int creatorId) async {
+    return await _fetchWithRetry(
+      () async => (await _characterRepository.fetchCharactersByCreator(creatorId)).data.results,
+      3,
+    );
+  }
+
+  /// Fetches data with retry logic in case of failures.
+  ///
+  /// [fetchFunction] - The function that performs the fetch operation.
+  /// [retries] - The number of times to retry the fetch operation on failure.
+  /// Returns the data fetched by the [fetchFunction].
   Future<List<T>> _fetchWithRetry<T>(
-      Future<List<T>> Function() fetchFunction, int retries) async {
+    Future<List<T>> Function() fetchFunction,
+    int retries,
+  ) async {
     for (int attempt = 0; attempt <= retries; attempt++) {
       try {
         return await fetchFunction();
@@ -232,8 +298,7 @@ class CharacterViewModel extends GetxController {
         if (error is DioException && error.response?.statusCode == 429) {
           final retryAfter = error.response?.headers.value('retry-after');
           final waitTime = retryAfter != null
-              ? Duration(
-                  seconds: int.tryParse(retryAfter) ?? (2 << attempt).toInt())
+              ? Duration(seconds: int.tryParse(retryAfter) ?? (2 << attempt).toInt())
               : Duration(seconds: (2 << attempt).toInt());
           await Future.delayed(waitTime);
         } else {
