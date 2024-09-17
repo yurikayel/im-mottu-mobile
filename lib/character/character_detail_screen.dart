@@ -65,21 +65,19 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
                 thumbnailUrl,
                 fit: BoxFit.cover,
               ),
-              title: Center(
-                child: Text(
-                  widget.character.name,
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontSize: isLargeScreen ? 36.0 : 24.0,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white, // Main text color
-                    shadows: [
-                      Shadow(
-                        color: Colors.black.withOpacity(0.7),
-                        offset: Offset(1, 1),
-                        blurRadius: 6,
-                      ),
-                    ],
-                  ),
+              title: Text(
+                widget.character.name,
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  fontSize: isLargeScreen ? 36.0 : 24.0,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black, // Main text color
+                  shadows: [
+                    const Shadow(
+                      color: Colors.white,
+                      offset: Offset(1, 1),
+                      blurRadius: 6,
+                    ),
+                  ],
                 ),
               ),
               titlePadding: const EdgeInsets.only(bottom: 12),
@@ -89,7 +87,6 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
             pinned: true,
             floating: false,
             stretch: true,
-            stretchTriggerOffset: 150.0,
           ),
           SliverList(
             delegate: SliverChildListDelegate(
